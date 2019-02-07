@@ -2,8 +2,12 @@ library(testthat)
 source("tools/TestsTools.R")
 
 
-test_that("Test Gramm_matrix(any_vector)",{
+test_that("Test Gramm_matrix(not_matrix)",{
   expect_error(Gramm_matrix(c(0, 1)), "Not appropriate input format")
+  expect_error(Gramm_matrix(data.frame(0, 1)), "Not appropriate input format")
+  expect_error(Gramm_matrix(list(0, 1)), "Not appropriate input format")
+  expect_error(Gramm_matrix(factor(0, 1)), "Not appropriate input format")
+  expect_error(Gramm_matrix("String"), "Not appropriate input format")
 })
 
 
