@@ -7,3 +7,18 @@ Epanechnikov <- function(x){
   result <- 3/4*(1 - x^2)*(abs(x) <= 1)
   return(result)
 }
+
+
+# --------------------------------------------------------
+# Nadaraya-Watson for component
+# --------------------------------------------------------
+
+nw_one_component <- function(x, X_train, Y_train, h, A){
+  X_train <- as.numeric(X_train)
+  Y_train <- as.numeric(Y_train)
+  A <- as.numeric(A)
+  
+  numerator <- sum(A * Y_train * Epanechnikov((x - X_train)/h))
+  denominator <- sum(A * Epanechnikov((x - X_train)/h))
+  return(numerator/denominator)
+}
