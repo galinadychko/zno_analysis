@@ -21,7 +21,7 @@ minor <- function(A, i, j){
   if (flag == FALSE) {stop("Not appropriate input format")}
   if (ncol(A) < 2 | nrow(A) < 2) {stop("Not correct dimension of input matrix")}
   if (i <= 0 | j <= 0) {stop("Not correct i,j")}
-  return(det(A[-i, -j]))
+  return(det(as.matrix(A[-i, -j])))
 }
 
 
@@ -33,7 +33,6 @@ all_matrix_minors <- function(matrix_){
   m <- matrix(nrow = ncols, ncol = ncols)
   for (i in 1:nrows) {
     for (j in 1:ncols) {
-      print(minor(matrix_, i, j))
       m[i, j] <- minor(matrix_, i, j)
     }
   }
