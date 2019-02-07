@@ -92,3 +92,29 @@ test_that("Test all_matrix_minors(different_matrices)",{
 test_that("Test minus_one(not_correct_value)",{
   expect_error(minus_one(1), "Not correct number of components")
 })
+
+
+test_that("Test minus_one(different_values)",{
+  expect_equal(minus_one(2), cbind(c(1, -1), c(-1, 1)))
+  expect_equal(minus_one(3), cbind(c(1, -1, 1), c(-1, 1, -1), c(1, -1, 1)))
+})
+
+
+test_that("Test acoeff(not_correct_value)",{
+  w <- cbind(c(1, 1), c(0, 0))
+  expect_error(acoeff(w), "Devision by zero")
+})
+
+
+test_that("Test acoeff(different_values)",{
+  w1 <- wcoeff_two_components(2)
+  w2 <- wcoeff_two_components(4)
+  w3 <- rbind(c(0.8, 0.1, 0.1), 
+              c(0.05, 0.90, 0.05), 
+              c(0.2, 0.1, 0.7))
+  expect_equal(acoeff(w1), cbind(c(0, 2), c(4, -2)))
+  expect_equal(acoeff(w2), cbind(c(-0.8, 0.4, 1.6, 2.8), c(4, 2, 0, -2)))
+  expect_equal(acoeff(w3), cbind(c(3.90625, -0.37500, -0.53125), 
+                                 c(-0.15625, 3.37500, -0.21875), 
+                                 c(-1.09375, -0.37500, 4.46875)))
+})
