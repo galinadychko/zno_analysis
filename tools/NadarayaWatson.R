@@ -22,3 +22,13 @@ nw_one_component <- function(x, X_train, Y_train, h, A){
   denominator <- sum(A * Epanechnikov((x - X_train)/h))
   return(numerator/denominator)
 }
+
+
+nw_all_components <- function(x, X_train, Y_train, h, A){
+  M <- ncol(A)
+  result <- sapply(1:M, 
+                   function(i, x, X_train, Y_train, h, A){
+                     return(nw_one_component(x, X_train, Y_train, h, A[, i]))
+                   }, x = x, X_train = X_train, Y_train = Y_train, h = h, A = A )
+  return(result)
+}
