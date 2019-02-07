@@ -35,6 +35,7 @@ test_that("Test Gramm_matrix(three_component_mixture)",{
   expect_equal(Gramm_matrix(w4), cbind(c(0.46875, 0.078125, 0.078125), c(0.078125, 0.0546875, 0.0546875), c(0.078125, 0.0546875, 0.0546875)))
 })
 
+
 test_that("Test minor(not_matrix)",{
   expect_error(minor(c(NA, NA), 1, 1), "Not appropriate input format")
   expect_error(minor(data.frame(NA, NA), 1, 1), "Not appropriate input format")
@@ -42,6 +43,7 @@ test_that("Test minor(not_matrix)",{
   expect_error(minor(factor(NA, NA), 1, 1), "Not appropriate input format")
   expect_error(minor("String", 1, 1), "Not appropriate input format")
 })
+
 
 test_that("Test minor(matrix, not_correct_i_j)",{
   M <- matrix(NA, nrow = 2, ncol = 2)
@@ -55,10 +57,38 @@ test_that("Test minor(matrix, not_correct_i_j)",{
   expect_error(minor(M, 1, -1), "Not correct i,j")
 })
 
-test_that("Test all_matrix_minor(not_matrix)",{
+
+test_that("Test minor(from_different_parameters)",{
+  M1 <- matrix(1:4, ncol = 2, nrow = 2)
+  M2 <- matrix(1:9, ncol = 3, nrow = 3)
+  expect_equal(minor(M1, 1, 1), 4)
+  expect_equal(minor(M2, 2, 3), -6)
+})
+
+
+test_that("Test all_matrix_minors(not_matrix)",{
   expect_error(all_matrix_minors(c(NA, NA)), "Not appropriate input format")
   expect_error(all_matrix_minors(data.frame(NA, NA)), "Not appropriate input format")
   expect_error(all_matrix_minors(list(NA, NA)), "Not appropriate input format")
   expect_error(all_matrix_minors(factor(NA, NA)), "Not appropriate input format")
   expect_error(all_matrix_minors("String"), "Not appropriate input format")
+})
+
+
+test_that("Test all_matrix_minors(not_correct_matrix)",{
+  M1 <- matrix(NA, ncol = 1, nrow = 1)
+  expect_error(all_matrix_minors(M1), "Not correct dimension of input matrix")
+})
+
+
+test_that("Test all_matrix_minors(different_matrices)",{
+  M1 <- matrix(1:4, ncol = 2, nrow = 2)
+  M2 <- matrix(1:9, ncol = 3, nrow = 3)
+  expect_equal(all_matrix_minors(M1), cbind(c(4, 3), c(2, 1)))
+  expect_equal(all_matrix_minors(M2), cbind(c(-3, -6, -3), c(-6, -12, -6), c(-3, -6, -3)))
+})
+
+
+test_that("Test minus_one(not_correct_value)",{
+  expect_error(minus_one(1), "Not correct number of components")
 })
