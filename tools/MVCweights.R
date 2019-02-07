@@ -20,6 +20,7 @@ minor <- function(A, i, j){
   flag <- try(is.matrix(A))
   if (flag == FALSE) {stop("Not appropriate input format")}
   if (ncol(A) < 2 | nrow(A) < 2) {stop("Not correct dimension of input matrix")}
+  if (i <= 0 | j <= 0) {stop("Not correct i,j")}
   return(as.matrix(A[-i, -j]))
 }
 
