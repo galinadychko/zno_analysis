@@ -2,7 +2,7 @@
 # Gramm matrix 
 # -------------------
 
-GramN_new <- function(weights_matrix){
+Gramm_matrix <- function(weights_matrix){
   flag <- try(is.matrix(w) | is.data.frame(w))
   if (flag == FALSE) {stop("Not appropriate input format")}
   nrows <- nrow(weights_matrix)
