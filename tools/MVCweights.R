@@ -41,6 +41,7 @@ all_matrix_minors <- function(matrix_){
 
 
 minus_one <- function(m_components){
+  if (m_components == 1) {stop("Not correct number of components")}
   m <- matrix(-1, m_components, m_components)
   power_matrix <- sapply(1:m_components, 
                          function(x){
