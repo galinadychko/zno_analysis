@@ -52,10 +52,10 @@ minus_one <- function(m_components){
 
 
 acoeff <- function(weights_matrix){
-  G <- GramN_new(weights_matrix)
+  G <- Gramm_matrix(weights_matrix)
   detG <- det(G)
   minus_ones <- minus_one(ncol(G))
-  all_min <- all_minors(G)
+  all_min <- all_matrix_minors(G)
   print(detG)
   prod <- weights_matrix %*% (t(all_min) * minus_ones)
   return(prod / detG)
