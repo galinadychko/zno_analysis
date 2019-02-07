@@ -3,8 +3,8 @@
 # -------------------
 
 Gramm_matrix <- function(weights_matrix){
-  flag <- try(is.matrix(w) | is.data.frame(w))
-  if (flag == FALSE) {stop("Not appropriate input format")}
+  flag <- try(is.matrix(weights_matrix) | is.data.frame(weights_matrix))
+  if (flag == FALSE) {stop("Not appropriate input format")
   nrows <- nrow(weights_matrix)
   prod_ <- t(weights_matrix) %*% weights_matrix
   return((prod_)/nrows)
