@@ -4,7 +4,8 @@
 
 Gramm_matrix <- function(weights_matrix){
   flag <- try(is.matrix(weights_matrix) | is.data.frame(weights_matrix))
-  if (flag == FALSE) {stop("Not appropriate input format")
+  if (flag == FALSE) {stop("Not appropriate input format")}
+  if (ncol(weights_matrix) < 2) {stop("Not correct mixture")}
   nrows <- nrow(weights_matrix)
   prod_ <- t(weights_matrix) %*% weights_matrix
   return((prod_)/nrows)
