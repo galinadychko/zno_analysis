@@ -17,7 +17,7 @@ Gramm_matrix <- function(weights_matrix){
 # -------------------
 
 minor <- function(A, i, j){
-  flag <- try(is.matrix(A) | is.data.frame(A))
+  flag <- try(is.matrix(A))
   if (flag == FALSE) {stop("Not appropriate input format")}
   if (ncol(A) < 2 | nrow(A) < 2) {stop("Not correct dimension of input matrix")}
   return(as.matrix(A[-i, -j]))
