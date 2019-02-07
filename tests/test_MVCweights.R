@@ -34,3 +34,23 @@ test_that("Test Gramm_matrix(three_component_mixture)",{
   expect_equal(Gramm_matrix(w2), cbind(c(0.625, 0.0625, 0.0625), c(0.0625, 0.03125, 0.03125), c(0.0625, 0.03125, 0.03125)))
   expect_equal(Gramm_matrix(w4), cbind(c(0.46875, 0.078125, 0.078125), c(0.078125, 0.0546875, 0.0546875), c(0.078125, 0.0546875, 0.0546875)))
 })
+
+test_that("Test minor(not_matrix)",{
+  expect_error(minor(c(0, 1), 1, 1), "Not appropriate input format")
+  expect_error(minor(data.frame(0, 1), 1, 1), "Not appropriate input format")
+  expect_error(minor(list(0, 1), 1, 1), "Not appropriate input format")
+  expect_error(minor(factor(0, 1), 1, 1), "Not appropriate input format")
+  expect_error(minor("String", 1, 1), "Not appropriate input format")
+})
+
+test_that("Test minor(matrix, not_correct_i_j)",{
+  M <- cbind(c(0, 1), c(1, 1))
+  expect_error(minor(M, 0, 0), "Not correct i,j")
+  expect_error(minor(M, 1, 0), "Not correct i,j")
+  expect_error(minor(M, 0, 1), "Not correct i,j")
+  expect_error(minor(M, -1, 0), "Not correct i,j")
+  expect_error(minor(M, 0, -1), "Not correct i,j")
+  expect_error(minor(M, -1, -1), "Not correct i,j")
+  expect_error(minor(M, -1, 1), "Not correct i,j")
+  expect_error(minor(M, 1, -1), "Not correct i,j")
+})
