@@ -25,7 +25,7 @@ minor <- function(A, i, j){
 }
 
 
-all_minors <- function(matrix_){
+all_matrix_minors <- function(matrix_){
   flag <- try(is.matrix(matrix_))
   if (flag == FALSE) {stop("Not appropriate input format")}
   nrows <- nrow(matrix_)
