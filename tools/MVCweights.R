@@ -30,3 +30,24 @@ all_minors <- function(matrix_){
   }
   return(m)
 }
+
+
+minus_one <- function(m_components){
+  m <- matrix(-1, m_components, m_components)
+  power_matrix <- sapply(1:m_components, 
+                         function(x){
+                           return(rep(x, m_components) + (1:m_components))
+                         })
+  return(m^power_matrix)
+}
+
+
+acoeff <- function(weights_matrix){
+  G <- GramN_new(weights_matrix)
+  detG <- det(G)
+  minus_ones <- minus_one(ncol(G))
+  all_min <- all_minors(G)
+  print(detG)
+  prod <- weights_matrix %*% (t(all_min) * minus_ones)
+  return(prod / detG)
+}
