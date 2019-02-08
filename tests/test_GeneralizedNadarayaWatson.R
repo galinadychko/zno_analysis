@@ -4,15 +4,15 @@ source("tools/TestsTools.R")
 
 test_that("Test GeneralisedNadarayaWatson/init", {
   instance <- GeneralisedNadarayaWatson$new()
-  expect_identical(instance$X_train, NULL)
-  expect_identical(instance$Y_train, NULL)
-  expect_identical(instance$A, NULL)
+  expect_null(instance$X_train)
+  expect_null(instance$Y_train)
+  expect_null(instance$A)
 })
 
 test_that("Test GeneralisedNadarayaWatson/train(not_correct_input)", {
-  X_train <- cbind(NA)
-  Y_train <- cbind(NA)
-  w_coeff <- c(NA)
+  X_train <- cbind(NaN)
+  Y_train <- cbind(NaN)
+  w_coeff <- c(NaN)
   instance <- GeneralisedNadarayaWatson$new()
   expect_error(instance$train(X_train, Y_train, w_coeff), "Not correct class atributes")
   expect_error(instance$train(as.numeric(X_train), Y_train, w_coeff), "Not correct class atributes")
@@ -47,13 +47,28 @@ test_that("Test GeneralisedNadarayaWatson/train(correct_input)", {
 })
 
 
+test_that("Test types GeneralisedNadarayaWatson/train(correct_input)", {
+  X_train <- rep(NaN, 2)
+  Y_train <- rep(NaN, 2)
+  w_coeff <- wcoeff_two_components(n = 2)
+  w_coeff2 <- rbind(c(0.8, 0.1, 0.1), 
+                    c(0.05, 0.90, 0.05), 
+                    c(0.2, 0.1, 0.7))
+  instance <- GeneralisedNadarayaWatson$new()
+  instance$train(X_train, Y_train, w_coeff)
+  expect_true(is.vector(instance$X_train))
+  expect_true(is.vector(instance$Y_train))
+  expect_true(is.matrix(instance$A))
+})
+
+
 test_that("Test GeneralisedNadarayaWatson/predict(not_correct_input)", {
   instance <- GeneralisedNadarayaWatson$new()
   expect_error(instance$predict(rep(NaN), 1), "The model was not trained correctly")
   instance <- GeneralisedNadarayaWatson$new()
   instance$X_train <- 1:2
   instance$Y_train <- 1:2
-  instance$A <- matrix(NA, 2, 2)
+  instance$A <- matrix(NaN, 2, 2)
   expect_error(instance$predict(rep(NaN, 1), 1), "The model coefficients are not numbers")
 })
 
@@ -74,4 +89,23 @@ test_that("Test GeneralisedNadarayaWatson/predict(correct_input)", {
   instance <- GeneralisedNadarayaWatson$new()
   instance$train(c(X_train, 3), c(Y_train, 1), w_coeff2)
   expect_equal(instance$predict(X_test2, 1), rbind(c(2, 2, 2), c(2, 2, 2)))
+})
+
+
+test_that("Test output type GeneralisedNadarayaWatson/predict", {
+  X_train <- rep(0.5, 2)
+  Y_train <- rep(2, 2)
+  X_test <- rep(0.5, 2)
+  X_test2 <- c(0.5, 0.7)
+  w_coeff <- wcoeff_two_components(n = 2)
+  w_coeff2 <- rbind(c(0.8, 0.1, 0.1),
+                    c(0.05, 0.90, 0.05),
+                    c(0.2, 0.1, 0.7))
+  instance <- GeneralisedNadarayaWatson$new()
+  instance$train(X_train, Y_train, w_coeff)
+  expect_true(is.matrix(instance$predict(X_test, 1)))
+  expect_true(is.matrix(instance$predict(X_test, .5)))
+  instance <- GeneralisedNadarayaWatson$new()
+  instance$train(c(X_train, 3), c(Y_train, 1), w_coeff2)
+  expect_true(is.matrix(instance$predict(X_test2, 1)))
 })
