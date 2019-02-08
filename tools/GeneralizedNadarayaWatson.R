@@ -14,9 +14,9 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                          self$A <- NULL
                                        },
                                        train = function(X_train, Y_train, w_coeff){
-                                         if (is.numeric(X_train) != TRUE | 
-                                             is.numeric(Y_train) != TRUE | 
-                                             is.matrix(w_coeff) != TRUE) 
+                                         if (!is.vector(X_train) | 
+                                             !is.vector(Y_train) | 
+                                             !is.matrix(w_coeff)) 
                                          {stop("Not correct class atributes")}
                                          
                                          if (any(c(length(X_train), length(Y_train), nrow(w_coeff)) != 
@@ -34,7 +34,7 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                              is.null(self$A))
                                          {stop("The model was not trained correctly")}
                                          if (!is.null(self$A)) 
-                                           {if (any(is.na(self$A))) {stop("The model coefficients are not numbers")}}
+                                         {if (any(is.na(self$A))) {stop("The model coefficients are not numbers")}}
                                          results <- sapply(X_test, 
                                                            function(x, h){
                                                              res <- nw_any_components(x, self$X_train, self$Y_train, h, self$A)
