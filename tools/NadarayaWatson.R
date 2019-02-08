@@ -27,14 +27,3 @@ nw_any_components <- function(x, X_train, Y_train, h, A){
   
   return(numerator/denominator)
 }
-
-# 
-# nw_all_components <- function(x, X_train, Y_train, h, A){
-#   if (is.matrix(A) != TRUE) {stop("Not correct input type")}
-#   M <- ncol(A)
-#   result <- sapply(1:M, 
-#                    function(i, x, X_train, Y_train, h, A){
-#                      return(nw_one_component(x, X_train, Y_train, h, A[, i]))
-#                    }, x = x, X_train = X_train, Y_train = Y_train, h = h, A = A)
-#   return(result)
-# }
