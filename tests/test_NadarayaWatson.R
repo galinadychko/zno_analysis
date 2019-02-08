@@ -1,5 +1,4 @@
 library(testthat)
-source("tools/TestsTools.R")
 
 
 test_that("Test Epanechnikov(not_correct_input_type)",{
@@ -27,6 +26,7 @@ test_that("Test nw_any_components(not_correct_input_type)",{
   expect_error(nw_any_components(as.numeric(x), X_train, as.numeric(Y_train), 1, as.numeric(A)), "Not correct input type")
   expect_error(nw_any_components(as.numeric(x), X_train, Y_train, 1, as.numeric(A)), "Not correct input type")
   expect_error(nw_any_components(as.numeric(x), X_train, Y_train, 1, A), "Not correct input type")
+  expect_error(nw_any_components(NA, X_train, Y_train, 1, A), "Not correct input type")
   expect_error(nw_any_components(2, rep(2, 2), rep(2, 2), 1, rep(0, 2)), "Devision by zero")
 })
 
