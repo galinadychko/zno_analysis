@@ -51,6 +51,14 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                          return(t(results))
                                        },
                                        predict_in_parallel = function(X_test, h){
+                                         if (is.numeric(X_test) != TRUE | is.numeric(h) != TRUE)
+                                         {stop("Not correct class atributes")}
+                                         if (is.null(self$X_train) | 
+                                             is.null(self$Y_train) |
+                                             is.null(self$A))
+                                         {stop("The model was not trained correctly")}
+                                         if (!is.null(self$A)) 
+                                         {if (any(is.na(self$A))) {stop("The model coefficients are not numbers")}}
                                          n_rows <- length(X_test)
                                          list_of_parts <- split_k_parts(k = self$max_threads, nrows = n_rows)
                                          res <- foreach(each_part = list_of_parts, 
@@ -64,7 +72,8 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                        stop_cluster = function(){
                                          stopImplicitCluster()
                                        },
-                                       run_cluster = function(){
+                                       run_cluster = function(max_threads = self$max_threads){
+                                         self$max_threads = max_threads
                                          registerDoParallel(self$max_threads)
                                        }
                                      )
