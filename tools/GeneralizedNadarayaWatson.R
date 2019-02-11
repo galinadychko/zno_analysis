@@ -1,6 +1,12 @@
 library(R6)
+library(foreach)
+library(doParallel)
+
+max_threads <- detectCores() - 1
+
 source("tools/NadarayaWatson.R")
 source("tools/MVCweights.R")
+source("tools/CommonTools.R")
 
 
 GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson", 
@@ -8,10 +14,12 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                        X_train = NULL,
                                        Y_train = NULL,
                                        A = NULL,
+                                       max_threads = max_threads,
                                        initialize = function(){
                                          self$X_train <- NULL
                                          self$Y_train <- NULL
                                          self$A <- NULL
+                                         self$max_threads <- max_threads
                                        },
                                        train = function(X_train, Y_train, w_coeff){
                                          if (!is.vector(X_train) | 
@@ -41,6 +49,23 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                                              return(res)
                                                            }, h = h)
                                          return(t(results))
+                                       },
+                                       predict_in_parallel = function(X_test, h){
+                                         n_rows <- length(X_test)
+                                         list_of_parts <- split_k_parts(k = self$max_threads, nrows = n_rows)
+                                         res <- foreach(each_part = list_of_parts, 
+                                                        .combine = list, 
+                                                        .multicombine = TRUE,
+                                                        .export = "self") %dopar% {
+                                                          self$predict(X_test[as.vector(each_part)], h)
+                                                          }
+                                          return(do.call(rbind, res))
+                                        },
+                                       stop_cluster = function(){
+                                         stopImplicitCluster()
+                                       },
+                                       run_cluster = function(){
+                                         registerDoParallel(self$max_threads)
                                        }
                                      )
 )
