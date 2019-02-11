@@ -1,4 +1,5 @@
 source("tools/GeneralizedNadarayaWatson.R")
+source("tools/CommonTools.R")
 
 
 train_test_split <- function(df, ratio=0.80){
@@ -16,10 +17,7 @@ cross_validation_split <- function(df, k=5){
   if (nrow(df) < k) {stop("Not correct input dimension")}
   nrows <- nrow(df)
   df2 <- as.matrix(df[sample(nrows, nrows, replace = FALSE),], ncol = ncol(df))
-  
-  sample_size <- ceiling(nrows/k)
-  id_list <- split(1:(k*sample_size), rep(1:k, each = sample_size))
-  id_list[[k]] <- id_list[[k]][id_list[[k]] <= nrows]
+  id_list <- split_k_parts(k, nrows)
   return(lapply(id_list, function(x){df2[x, ]}))
 }
 
