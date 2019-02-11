@@ -29,6 +29,23 @@ Source: CRAN
 Version: 0.6.18
 Hash: 65f62365ec69ddd17230d2ffe891a6ab
 
+Package: doParallel
+Source: CRAN
+Version: 1.0.14
+Hash: 7e564b9d723d8648b18457baba2a1383
+Requires: foreach, iterators
+
+Package: foreach
+Source: CRAN
+Version: 1.4.4
+Hash: 4df5ab2c8c35382dacab75d414da6748
+Requires: iterators
+
+Package: iterators
+Source: CRAN
+Version: 1.0.10
+Hash: 9f8af91e4a3487a282d7dea67513e519
+
 Package: magrittr
 Source: CRAN
 Version: 1.5
