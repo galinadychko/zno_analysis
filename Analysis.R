@@ -60,3 +60,24 @@ points(Xtest, as.vector(pr1[, 3]), col = "blue")
 points(Xtest, as.vector(pr1[, 4]), col = "pink")
 
 points(Xtest, as.vector(pr1[, 5]), col = "yellow")
+
+all_plots <- list()
+annotations_list <- list()
+
+for (name in names(W[, -ncol(W)])) {
+  print(name)
+  d <- df[W[, name] == W["max_value"], ]
+  print(nrow(d))
+  # all_plots[[name]] <- plot_ly(x = d[, "math"], y = d[, "ukr"], mode = "markers", type = "scatter", name=name) 
+  # annotations_list <- append(annotations_list, list(x = 0.2 , y = 1.05, text = name, showarrow = F, xref='paper', yref='paper'))
+}
+# plotly::subplot(all_plots[["pro_ukr"]], all_plots[["not_voted"]]) %>% 
+#   layout(annotations = list(
+#     list(x = 0.2 , y = 1.05, text = name, showarrow = F, xref='paper', yref='paper'),
+#     list(x = 0.8 , y = 1.05, text = name, showarrow = F, xref='paper', yref='paper'))
+#   )
+# 
+
+
+library(WVPlots)
+ScatterHist(diamonds, "price", "carat")
