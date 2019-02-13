@@ -35,6 +35,12 @@ Source: CRAN
 Version: 1.0.0
 Hash: c7273c0f0bc9f5e41f4c52a8cf571f0f
 
+Package: WVPlots
+Source: CRAN
+Version: 1.0.8
+Hash: 996db9375517fc17956c678e6eb3562b
+Requires: cdata, ggplot2, gridExtra, sigr, wrapr
+
 Package: acepack
 Source: CRAN
 Version: 1.4.1
@@ -82,6 +88,12 @@ Source: CRAN
 Version: 1.17.1.1
 Hash: 1764f9cb70825aa7a1c461e7514ffb73
 Requires: bitops
+
+Package: cdata
+Source: CRAN
+Version: 1.0.5
+Hash: e4f427fb391d471429dc1996f6f23304
+Requires: rquery, wrapr
 
 Package: checkmate
 Source: CRAN
@@ -362,6 +374,12 @@ Version: 1.3-2
 Hash: a25c3f70c166fb3fbabc410eb32b6366
 Requires: backports
 
+Package: rquery
+Source: CRAN
+Version: 1.3.0
+Hash: 2cc799225222659f609776726beab780
+Requires: wrapr
+
 Package: rstudioapi
 Source: CRAN
 Version: 0.9.0
@@ -379,6 +397,12 @@ Version: 1.2.0
 Hash: 6853126283ff0572d9f370a1520ac831
 Requires: R6, crayon, digest, htmltools, httpuv, jsonlite, later, mime,
     promises, rlang, sourcetools, xtable
+
+Package: sigr
+Source: CRAN
+Version: 1.0.4
+Hash: cece2db660dcd56391c2c9236cbc053e
+Requires: wrapr
 
 Package: sourcetools
 Source: CRAN
@@ -452,6 +476,11 @@ Package: withr
 Source: CRAN
 Version: 2.1.2
 Hash: d534108bcd5f34ec73e9eb523751ba20
+
+Package: wrapr
+Source: CRAN
+Version: 1.8.3
+Hash: 82c65dd1dea558a0ffa28ea17e1892dd
 
 Package: xfun
 Source: CRAN

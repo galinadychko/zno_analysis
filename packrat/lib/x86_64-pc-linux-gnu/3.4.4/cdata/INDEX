@@ -1,0 +1,30 @@
+blocks_to_rowrecs       Map sets rows to columns (takes a
+                        'data.frame').
+blocks_to_rowrecs_q     Map sets rows to columns (query based, take
+                        name of table).
+build_pivot_control     Build a blocks_to_rowrecs()/rowrecs_to_blocks()
+                        control table that specifies a pivot from a
+                        'data.frame'.
+build_pivot_control_q   Build a blocks_to_rowrecs_q() control table
+                        that specifies a pivot (query based, takes name
+                        of table).
+build_unpivot_control   Build a rowrecs_to_blocks() control table that
+                        specifies a un-pivot (or "shred").
+cdata                   'cdata': Fluid Data Transformations.
+checkColsFormUniqueKeys
+                        Check that a set of columns form unique keys.
+convert_records         General transform from arbitrary record shape
+                        to arbitrary record shape.
+map_fields              Map field values from one column into new
+                        derived columns (takes a 'data.frame').
+map_fields_q            Map field values from one column into new
+                        derived columns (query based, takes name of
+                        table).
+pivot_to_rowrecs        Move values from rows to columns (pivot).
+qlook                   Quick look at remote data
+rowrecs_to_blocks       Map a set of columns to rows (takes a
+                        'data.frame').
+rowrecs_to_blocks_q     Map a set of columns to rows (query based, take
+                        name of table).
+unpivot_to_blocks       Move values from columns to rows (anti-pivot,
+                        or "shred").

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="John Mount, Nina Zumel" />
+
+<meta name="date" content="2019-01-20" />
+
+<title>General Data Transforms With cdata</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">General Data Transforms With cdata</h1>
+<h4 class="author"><em>John Mount, Nina Zumel</em></h4>
+<h4 class="date"><em>2019-01-20</em></h4>
+
+
+
+<p>One of the design goals of the <a href="https://github.com/WinVector/cdata"><code>cdata</code></a> <a href="https://www.r-project.org"><code>R</code></a> package is that very powerful and arbitrary record transforms should be convenient and take only one or two steps. In fact it is the goal to take just about any record shape to any other in two steps: first convert to row-records, then re-block the data into arbitrary record shapes (please see <a href="https://winvector.github.io/cdata/articles/blocksrecs.html">here</a> and <a href="https://winvector.github.io/cdata/articles/design.html">here</a> for the concepts).</p>
+<p>But as with all general ideas, it is much easier to see what we mean by the above with a concrete example. Let’s consider the following artificial (but simple) example. Suppose we have the following data.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(<span class="st">&quot;cdata&quot;</span>)
+
+data &lt;-<span class="st"> </span><span class="kw">build_frame</span>(
+  <span class="st">'record_id'</span>, <span class="st">'row'</span>,  <span class="st">'col1'</span>, <span class="st">'col2'</span>, <span class="st">'col3'</span> <span class="op">|</span>
+<span class="st">  </span><span class="dv">1</span>,           <span class="st">'row1'</span>,  <span class="dv">1</span>,      <span class="dv">2</span>,      <span class="dv">3</span>     <span class="op">|</span>
+<span class="st">  </span><span class="dv">1</span>,           <span class="st">'row2'</span>,  <span class="dv">4</span>,      <span class="dv">5</span>,      <span class="dv">6</span>     <span class="op">|</span>
+<span class="st">  </span><span class="dv">1</span>,           <span class="st">'row3'</span>,  <span class="dv">7</span>,      <span class="dv">8</span>,      <span class="dv">9</span>     <span class="op">|</span>
+<span class="st">  </span><span class="dv">2</span>,           <span class="st">'row1'</span>,  <span class="dv">11</span>,     <span class="dv">12</span>,     <span class="dv">13</span>    <span class="op">|</span>
+<span class="st">  </span><span class="dv">2</span>,           <span class="st">'row2'</span>,  <span class="dv">14</span>,     <span class="dv">15</span>,     <span class="dv">16</span>    <span class="op">|</span>
+<span class="st">  </span><span class="dv">2</span>,           <span class="st">'row3'</span>,  <span class="dv">17</span>,     <span class="dv">18</span>,     <span class="dv">19</span>    )
+
+knitr<span class="op">::</span><span class="kw">kable</span>(data)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">record_id</th>
+<th align="left">row</th>
+<th align="right">col1</th>
+<th align="right">col2</th>
+<th align="right">col3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">row1</td>
+<td align="right">1</td>
+<td align="right">2</td>
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="left">row2</td>
+<td align="right">4</td>
+<td align="right">5</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">row3</td>
+<td align="right">7</td>
+<td align="right">8</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">row1</td>
+<td align="right">11</td>
+<td align="right">12</td>
+<td align="right">13</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="left">row2</td>
+<td align="right">14</td>
+<td align="right">15</td>
+<td align="right">16</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">row3</td>
+<td align="right">17</td>
+<td align="right">18</td>
+<td align="right">19</td>
+</tr>
+</tbody>
+</table>
+<p>In the above the records are the triples of rows with matching <code>record_id</code> and the different rows within the record are identified by the value in the <code>row</code> column. So The data items are named by the triplet <code>record_id</code>, <code>row</code> and renaming column name (<code>col1</code>, <code>col2</code>, or <code>col2</code>). This sort of naming of values is essentially <a href="https://en.wikipedia.org/wiki/Codd%27s_12_rules">Codd’s “guaranteed access rule”</a>.</p>
+<p>Suppose we want to transpose each of the records- swapping the row and column notions. With <code>cdata</code> this is easy. First you design a transform to flatten each complex record into a single wide row (using the design steps taught <a href="https://winvector.github.io/cdata/articles/design.html">here</a>). Essentially that is just specifying the following control variables. We define how to identify records (the key columns) and the structure of the records (giving the interior of the record arbitrary names we will re-use later).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">keyColumns =<span class="st"> 'record_id'</span>
+
+incoming_shape &lt;-<span class="st"> </span><span class="kw">qchar_frame</span>(
+  row,  col1, col2, col3 <span class="op">|</span>
+<span class="st">  </span>row1, v11,  v12,  v13  <span class="op">|</span>
+<span class="st">  </span>row2, v21,  v22,  v23  <span class="op">|</span>
+<span class="st">  </span>row3, v31,  v32,  v33  )</code></pre></div>
+<p>And we specify (using the same principles) the desired final record shape, re-using the interior names from the first step to show where values are to be mapped.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">outgoing_shape &lt;-<span class="st"> </span><span class="kw">qchar_frame</span>(
+  column, row1, row2, row3 <span class="op">|</span>
+<span class="st">  </span>col1,   v11,  v21,  v31  <span class="op">|</span>
+<span class="st">  </span>col2,   v12,  v22,  v32  <span class="op">|</span>
+<span class="st">  </span>col3,   v13,  v23,  v33  )</code></pre></div>
+<p>Once you have done this the conversion is accomplished in two function calls.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rowrecs &lt;-<span class="st"> </span><span class="kw">blocks_to_rowrecs</span>(
+  data,
+  <span class="dt">keyColumns =</span> keyColumns,
+  <span class="dt">controlTable =</span> incoming_shape)
+transformed &lt;-<span class="st"> </span><span class="kw">rowrecs_to_blocks</span>(
+  rowrecs,
+  <span class="dt">controlTable =</span> outgoing_shape,
+  <span class="dt">columnsToCopy =</span> keyColumns)
+
+knitr<span class="op">::</span><span class="kw">kable</span>(transformed)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">record_id</th>
+<th align="left">column</th>
+<th align="right">row1</th>
+<th align="right">row2</th>
+<th align="right">row3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">col1</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="left">col2</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">8</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">col3</td>
+<td align="right">3</td>
+<td align="right">6</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">col1</td>
+<td align="right">11</td>
+<td align="right">14</td>
+<td align="right">17</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="left">col2</td>
+<td align="right">12</td>
+<td align="right">15</td>
+<td align="right">18</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">col3</td>
+<td align="right">13</td>
+<td align="right">16</td>
+<td align="right">19</td>
+</tr>
+</tbody>
+</table>
+<p>And the transform is done, each record has been transposed. The principle is “draw a picture.” First we draw a picture of the block record structure we have, and then we draw a picture of the block record structure we want. The intermediate form (<code>rowrecs</code>) is a special form where the concepts of records and rows exactly agree. In this form each record is one exactly row and each row is exactly one record. This data looks like the following.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">knitr<span class="op">::</span><span class="kw">kable</span>(rowrecs)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">record_id</th>
+<th align="right">v11</th>
+<th align="right">v21</th>
+<th align="right">v31</th>
+<th align="right">v12</th>
+<th align="right">v22</th>
+<th align="right">v32</th>
+<th align="right">v13</th>
+<th align="right">v23</th>
+<th align="right">v33</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">7</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">8</td>
+<td align="right">3</td>
+<td align="right">6</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">11</td>
+<td align="right">14</td>
+<td align="right">17</td>
+<td align="right">12</td>
+<td align="right">15</td>
+<td align="right">18</td>
+<td align="right">13</td>
+<td align="right">16</td>
+<td align="right">19</td>
+</tr>
+</tbody>
+</table>
+<p>We have complete freedom to re-name columns and record-piece labels (the labels that tell us which portion of a block-record each row fits into).</p>
+<p>In <code>cdata</code> <code>1.0.5</code> or newer we can make things even easier and use a <a href="https://winvector.github.io/cdata/reference/convert_records.html">convenience function that combines these steps</a>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">t2 &lt;-<span class="st"> </span><span class="kw">convert_records</span>(
+  data,
+  <span class="dt">keyColumns =</span> keyColumns,
+  <span class="dt">incoming_shape =</span> incoming_shape,
+  <span class="dt">outgoing_shape =</span> outgoing_shape)
+
+knitr<span class="op">::</span><span class="kw">kable</span>(t2)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">record_id</th>
+<th align="left">column</th>
+<th align="right">row1</th>
+<th align="right">row2</th>
+<th align="right">row3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">col1</td>
+<td align="right">1</td>
+<td align="right">4</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="right">1</td>
+<td align="left">col2</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">8</td>
+</tr>
+<tr class="odd">
+<td align="right">1</td>
+<td align="left">col3</td>
+<td align="right">3</td>
+<td align="right">6</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">col1</td>
+<td align="right">11</td>
+<td align="right">14</td>
+<td align="right">17</td>
+</tr>
+<tr class="odd">
+<td align="right">2</td>
+<td align="left">col2</td>
+<td align="right">12</td>
+<td align="right">15</td>
+<td align="right">18</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="left">col3</td>
+<td align="right">13</td>
+<td align="right">16</td>
+<td align="right">19</td>
+</tr>
+</tbody>
+</table>
+<p>Also these conversions can also be translated into <a href="https://github.com/WinVector/rquery"><code>rquery</code></a> operators, and therefore saved to be run either in memory or directly on a database.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">table_desciption &lt;-<span class="st"> </span>rquery<span class="op">::</span><span class="kw">local_td</span>(data)
+ops &lt;-<span class="st"> </span>table_desciption <span class="op">%.&gt;%</span>
+<span class="st">  </span><span class="kw">convert_records</span>(
+    .,
+    <span class="dt">keyColumns =</span> keyColumns,
+    <span class="dt">incoming_shape =</span> incoming_shape,
+    <span class="dt">outgoing_shape =</span> outgoing_shape)
+
+<span class="kw">cat</span>(<span class="kw">format</span>(ops))
+<span class="co">#&gt; table(data; </span>
+<span class="co">#&gt;   record_id,</span>
+<span class="co">#&gt;   row,</span>
+<span class="co">#&gt;   col1,</span>
+<span class="co">#&gt;   col2,</span>
+<span class="co">#&gt;   col3) %.&gt;%</span>
+<span class="co">#&gt;  non_sql_node(., blocks_to_rowrecs(.)) %.&gt;%</span>
+<span class="co">#&gt;  non_sql_node(., rowrecs_to_blocks(.))</span>
+
+rquery<span class="op">::</span><span class="kw">column_names</span>(ops)
+<span class="co">#&gt; [1] &quot;record_id&quot; &quot;column&quot;    &quot;row1&quot;      &quot;row2&quot;      &quot;row3&quot;</span>
+
+<span class="cf">if</span>(<span class="kw">requireNamespace</span>(<span class="st">&quot;DBI&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>) <span class="op">&amp;&amp;</span>
+<span class="st">   </span><span class="kw">requireNamespace</span>(<span class="st">&quot;RSQLite&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)) {
+  raw_connection &lt;-<span class="st"> </span>DBI<span class="op">::</span><span class="kw">dbConnect</span>(RSQLite<span class="op">::</span><span class="kw">SQLite</span>(), 
+                                   <span class="st">&quot;:memory:&quot;</span>)
+  RSQLite<span class="op">::</span><span class="kw">initExtension</span>(raw_connection)
+  db &lt;-<span class="st"> </span>rquery<span class="op">::</span><span class="kw">rquery_db_info</span>(
+    <span class="dt">connection =</span> raw_connection,
+    <span class="dt">is_dbi =</span> <span class="ot">TRUE</span>,
+    <span class="dt">connection_options =</span> rquery<span class="op">::</span><span class="kw">rq_connection_tests</span>(raw_connection))
+  
+  db_td &lt;-<span class="st"> </span>rquery<span class="op">::</span><span class="kw">rq_copy_to</span>(db, <span class="st">&quot;data&quot;</span>, data)
+  
+  ops <span class="op">%.&gt;%</span><span class="st"> </span>
+<span class="st">    </span>db <span class="op">%.&gt;%</span><span class="st"> </span>
+<span class="st">    </span><span class="kw">print</span>(.)
+  
+  DBI<span class="op">::</span><span class="kw">dbDisconnect</span>(raw_connection)
+}
+<span class="co">#&gt;   record_id column row1 row2 row3</span>
+<span class="co">#&gt; 1         1   col1    1    4    7</span>
+<span class="co">#&gt; 2         1   col2    2    5    8</span>
+<span class="co">#&gt; 3         1   col3    3    6    9</span>
+<span class="co">#&gt; 4         2   col1   11   14   17</span>
+<span class="co">#&gt; 5         2   col2   12   15   18</span>
+<span class="co">#&gt; 6         2   col3   13   16   19</span></code></pre></div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
