@@ -22,8 +22,8 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                          self$max_threads <- max_threads
                                        },
                                        train = function(X_train, Y_train, w_coeff){
-                                         if (!is.vector(X_train) | 
-                                             !is.vector(Y_train) | 
+                                         if (!is.vector(X_train, mode = "numeric") | 
+                                             !is.vector(Y_train, mode = "numeric") | 
                                              !is.matrix(w_coeff)) 
                                          {stop("Not correct class atributes")}
                                          
