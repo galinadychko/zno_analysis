@@ -10,11 +10,11 @@ matrix_mean_std <- function(M){
 }
 
 
-GNWcv_computation <- function(cv_split, X_colname, Y_colname, W_colname, h){
+GNWcv_computation <- function(cv_split, X_colname, Y_colname, W_colname, h, use_parallel=TRUE){
   k <- length(cv_split)
   cv_names <- names(cv_split)
-  res <- lapply(1:2, 
-                function(x, X_colname, Y_colname, W_colname, h){
+  res <- lapply(1:k, 
+                function(x, X_colname, Y_colname, W_colname, h, use_parallel){
                   print(x)
                   test <- cv_split[[x]]
                   X_test <- as.vector(test[, X_colname])
@@ -28,37 +28,50 @@ GNWcv_computation <- function(cv_split, X_colname, Y_colname, W_colname, h){
                   W_train <- as.matrix(train[, W_colname])
                   remove(train)
                   
-                  inst <- GeneralisedNadarayaWatson$new()
-                  inst$run_cluster()
-                  inst$train(X_train, Y_train, W_train)
-                  prediction <- inst$predict_in_parallel(X_test, W_test, h)
-                  inst$stop_cluster()
+                  if (use_parallel) {
+                    inst <- GeneralisedNadarayaWatson$new()
+                    inst$run_cluster()
+                    inst$train(X_train, Y_train, W_train)
+                    prediction <- inst$predict_in_parallel(X_test, W_test, h)
+                    inst$stop_cluster()
+                  }
+                  else {
+                    inst <- GeneralisedNadarayaWatson$new()
+                    inst$train(X_train, Y_train, W_train)
+                    prediction <- inst$predict(X_test, W_test, h)
+                  }
+                  
                   
                   metrics_value <- weighted_MSE(Y_true = Y_test,
                                                 Y_predicted = prediction$prediction,
                                                 A_coeff = prediction$A_test)
                   
                   return(metrics_value)
-                }, X_colname = X_colname, Y_colname = Y_colname, W_colname = W_colname, h = h)
+                }, 
+                X_colname = X_colname, 
+                Y_colname = Y_colname, 
+                W_colname = W_colname, 
+                h = h, use_parallel = use_parallel)
   computation <- do.call(rbind, res)
   return(computation)
 }
 
 
-GNWcv_across_h <- function(h_range, cv_df_split, X_colname, Y_colname, W_colname){
+GNWcv_across_h <- function(h_range, cv_df_split, X_colname, Y_colname, W_colname, use_parallel){
   l <- lapply(h_range,
-              function(h, cv_df_split, X_colname, Y_colname, W_colname){
+              function(h, cv_df_split, X_colname, Y_colname, W_colname, use_parallel){
                 print("h = " %&% as.character(h))
                 cv_computation <- GNWcv_computation(cv_df_split,
                                                       X_colname, Y_colname,
-                                                      W_colname, h)
+                                                      W_colname, h, use_parallel)
                 cv_m_std <- matrix_mean_std(cv_computation)
                 rownames(cv_m_std) <- c("mean_" %&% as.character(h), "std")
                 return(cv_m_std)
               },
               cv_df_split = cv_df_split,
               X_colname = X_colname, Y_colname = Y_colname,
-              W_colname = W_colname)
+              W_colname = W_colname, 
+              use_parallel = use_parallel)
   names(l) <- as.character(h_range)
   res <- do.call(rbind, l)
   return(res)
