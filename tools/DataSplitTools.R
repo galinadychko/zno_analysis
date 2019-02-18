@@ -1,4 +1,3 @@
-source("tools/GeneralizedNadarayaWatson.R")
 source("tools/CommonTools.R")
 
 
@@ -19,19 +18,4 @@ cross_validation_split <- function(df, k=5){
   df2 <- as.matrix(df[sample(nrows, nrows, replace = FALSE),], ncol = ncol(df))
   id_list <- split_k_parts(k, nrows)
   return(lapply(id_list, function(x){df2[x, ]}))
-}
-
-
-cross_validation <- function(cv_split, func, parameters){
-  k <- length(cv_split)
-  cv_names <- names(cv_split)
-  res <- lapply(1:k, 
-                function(x){
-                  test <- cv_split[[x]]
-                  train <- do.call(rbind, cv_split[!x %in% cv_names])
-                  Y_res <- lapply(test["x"], 
-                                  function(x){
-                                    return(nadaraya_watson(x, train["x"], train["y"], parameters["h"], parameters["A"]))
-                                  })
-                })
 }
