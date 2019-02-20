@@ -65,7 +65,7 @@ GNWcv_across_h <- function(h_range, cv_df_split, X_colname, Y_colname, W_colname
                                                       X_colname, Y_colname,
                                                       W_colname, h, use_parallel)
                 cv_m_std <- matrix_mean_std(cv_computation)
-                rownames(cv_m_std) <- c("mean_" %&% as.character(h), "std")
+                rownames(cv_m_std) <- c("mean_" %&% as.character(h), "std_" %&% as.character(h))
                 return(cv_m_std)
               },
               cv_df_split = cv_df_split,
