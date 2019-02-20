@@ -1,0 +1,152 @@
+---
+title: "Report_2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 3-компонента модель суміші зі змінними концентраціями.
+
+```{r 3complibraries, message=FALSE}
+library(plotly)
+library(Hmisc)
+library(WVPlots)
+library(plyr)
+source("tools/DataSplitTools.R")
+source("tools/GeneralizedNadarayaWatson.R")
+source("tools/CommonTools.R")
+source("tools/CrossValTools.R")
+```
+
+Виділимо 3 компоненти:
+* відповідно до проукраїнських регіонів
+* відповідно до "байдужих" регіонів
+* всі інші
+
+
+```{r 3comp_read_data}
+df <- read.csv2(file = "data/ZNOandVoating/input.csv", 
+                header = FALSE, sep = ";", dec = ",")
+names(df) <- c("ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+
+df <- as.data.frame(df)
+
+df[, "other"] <- rowSums(df[, c("radical", "opposition", "small")])
+df <- df[, -c(4, 5, 6)]
+head(df, 3)
+```
+
+Поглянемо на кореляції між результатами ЗНО, політичними силами:
+
+```{r 3compcorrolation_heatmap}
+c <- cor(df, method = "pearson")
+plot_ly(x = rownames(c), y = colnames(c), z = c, colors = "Greys", type = "heatmap") %>% layout(title = "Pearson Correlation")
+remove(c)
+```
+Відмітимо майже 0 кореляцію між результатами ЗНО з української мови та всіма політичними напрямками.
+Також помітимо, від'ємні значні кореляції проукраїнської сили та всіма іншими групами, що є логічним.
+Кореляція між "іншими" та "байдужими" -- додатня та досить велика.
+
+Із коду нижче видно, що знову не назбируються області для яких ймовірніше за все, більшість проголосувала за "інше"
+
+```{r 3compseparate_distribution_math}
+W <- as.data.frame(df[, -c(1, 2)])
+W[, "max_value"] <- apply(W, 1, max)
+
+print(df[W[, "other"] == W["max_value"], ])
+
+```
+Розіб'ємо вибірку на тренувальну та тестову частини у відсотковому співвідношенні 80/20%.
+Далі, тренувальну частину розіб'ємо на 5-частин для проведення 5-ти фолдової кроссвалідації з метою визначення оптимального для кожної компоненти параметра згладжування h.
+
+```{r 3compcross_val_split}
+df[, -c(1, 2)] <- df[, -c(1, 2)]/100
+df <- df[(df$math != 0) & (df$ukr != 0) ,]
+
+train_test_list <- train_test_split(df, ratio = 0.80)
+
+train <- train_test_list[["train"]]
+test <- train_test_list[["test"]]
+
+cv_split <- cross_validation_split(train)
+remove(df); remove(train_test_list)
+```
+
+Нижче запустимо 5-ти фолдову кросс-валідацію та визначимо оптимальних параметрів згладжування для кожної моделі (серед наведеного діапазону).
+
+```{r 3comptrain_predict_save1}
+h_range <- c(seq(0.1, 1, 0.1), seq(1.5, 5, 0.5))
+
+GNW_cv_results <- GNWcv_across_h(h_range = h_range, 
+                                 cv_df_split = cv_split, 
+                                 X_colname = "math", Y_colname = "ukr", 
+                                 W_colname = c("pro_ukr", "not_voted", "other"), 
+                                 use_parallel = TRUE)
+
+h_opt <- optimal_h(GNW_cv_results)
+
+remove(cv_split); remove(h_range)
+```
+
+Збережемо про всяк випадок результати середніх та дисперсій кросс-валідації.
+
+```{r 3compsave_pred1}
+write.csv(GNW_cv_results, file = "data/computation_results/3_cv_mean_std.csv", row.names = TRUE)
+```
+
+## Порівняння результатів кросс-валідації та прогнозування на відкладеній вибірці
+
+```{r read_pred1}
+# GNW_cv_results <- read.csv("data/computation_results/5_cv_mean_std.csv",  row.names = NULL, header= TRUE)
+# names_ <- GNW_cv_results[, "X"]
+# GNW_cv_results <- as.matrix(GNW_cv_results[, -1], mode="numeric")
+# rownames(GNW_cv_results) <- as.vector(names_, mode="character")
+# GNW_cv_results
+# 
+# h_opt <- optimal_h(GNW_cv_results)
+# h_opt
+```
+
+Порівняємо тепер результати кросс-валідації з результатми прогнозування на тестовій частині даних.
+
+```{r 3compcomparing_cross_val_test}
+GNW <- GeneralisedNadarayaWatson$new()
+GNW$train(X_train = as.numeric(train[, "math"]), 
+          Y_train = as.numeric(train[, "ukr"]), 
+          W_train = as.matrix(train[, -c(1, 2)]))
+GNW$run_cluster()
+prediction_with_acoeff <- GNW$predict_in_parallel(X_test = as.numeric(test[, "math"]), 
+                                                  W_test = as.matrix(test[, -c(1, 2)]), h = h_opt)
+GNW$stop_cluster()
+
+prediction <- prediction_with_acoeff[["prediction"]]
+A_coeff <- prediction_with_acoeff[["A_test"]] 
+
+remove(GNW); remove(train)
+```
+
+Порахуємо зважену суму МНК для прогнозу зробленого на тестових даних.
+
+```{r 3compweighted_RMSE_tst_prediction}
+WMSE <- weighted_MSE(Y_true = as.numeric(test[, "ukr"]), Y_predicted = prediction, A_coeff = A_coeff)
+```
+
+Відмітимо, що найменше значення зваженого МНК для моделей, що відповідають проукраїнській силі та тим, хто не прогоолосував.
+Нагадаємо, найбільша по модулю кореляція спостерігалася між результатами ЗНО з української мовои та проукр. силами й тими, хто не проголосував.
+Також відмітимо, що раніше ми змогли виділити лише регіони, де переважає проукр напрямок та ті, в яких переважає не голосування.
+Тобто не виявилось регіонів, у яких переважають голоси за радикалів, за опозицію або за малі партії.
+
+Порівняємо з результатами крос-валідації з відповідними параметрами згладжування.
+
+```{r 3compcomparing_cv_test_WMSE}
+cv_mean_results <- sapply(1:length(h_opt), 
+                          function(i){
+                            GNW_cv_results[which("mean_" %&% as.character(h_opt[i]) == rownames(GNW_cv_results)), i]
+                            })
+cv_test_comparing <- rbind(cv_mean_results, WMSE)
+rownames(cv_test_comparing) <- c("cross-validation", "test")
+colnames(cv_test_comparing) <- 1:5
+print(cv_test_comparing)
+```

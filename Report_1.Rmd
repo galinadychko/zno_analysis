@@ -1,0 +1,375 @@
+---
+title: "Report"
+output: 
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE}
+library(plotly)
+library(Hmisc)
+library(WVPlots)
+library(plyr)
+source("tools/DataSplitTools.R")
+source("tools/GeneralizedNadarayaWatson.R")
+source("tools/CommonTools.R")
+source("tools/CrossValTools.R")
+```
+
+# Аналіз даних
+
+Зчитаємо дані:
+
+```{r read_data}
+df <- read.csv2(file = "data/ZNOandVoating/input.csv", 
+                header = FALSE, sep = ";", dec = ",")
+names(df) <- c("ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+
+head(df, 3)
+```
+
+## ЗНО з математики та української мови
+
+Виведемо загальні характеристики даних ЗНО з математики та української мови:
+
+```{r primitive_analysis}
+describe(df[, c("math", "ukr")])
+```
+
+Із таблиці вище видно, що в записах нема пропущених значень.
+Судячи із значень квантилів, половина значень ЗНО з математики є нулями.
+Варто відмітити, що значно менша частка значень 0 у ЗНО з української мови.
+
+Подивимося на розподіли:
+
+```{r histogram}
+p1 <- plot_ly(x = df[, "math"], type = "histogram") %>% layout(title = "EIT: Mathematics")
+p2 <- plot_ly(x = df[, "ukr"], type = "histogram") %>% layout(title = "EIT: Ukranian language")
+
+plotly::subplot(p1, p2)
+remove(p1); remove(p2)
+```
+
+Подивимося на співвідношення людей, котрі отримали 0 по математиці та українській одночасно
+
+```{r zero_both_subj}
+print("Не подолали поріг ЗНО відносно всіх абітурієнтів: " %&% as.character(round(nrow(df[(df$math == 0 & df$ukr == 0), ]) * 100 / nrow(df), 2)) %&% "%")
+print("Не подолали поріг ЗНО відносно тих, хто не склав математику: " %&% as.character(round(nrow(df[(df$math == 0 & df$ukr == 0), ]) * 100 /
+                                                                                     nrow(df[(df$math == 0), ]), 2)) %&% "%")
+print("Не подолали поріг відносно тих, хто не склав українську: " %&% as.character(round(nrow(df[(df$math == 0 & df$ukr == 0), ]) * 100 / 
+                                                                                       nrow(df[(df$ukr == 0), ]), 2)) %&% "%")
+```
+
+Із останнього напрошуєтся висновок, що ті, хто не здали українську, скоріш за все не здали й математику. 
+
+Поглянемо на кореляції між результатами ЗНО, політичними силами:
+
+```{r corrolation_heatmap}
+c <- cor(df, method = "pearson")
+plot_ly(x = rownames(c), y = colnames(c), z = c, colors = "Greys", type = "heatmap") %>% layout(title = "Pearson Correlation")
+remove(c)
+```
+
+Відмітимо майже 0 кореляцію між результатами ЗНО з української мови та про-український політичний напрямок та слабку кореляцію  між результатми математики та української.
+
+Видалимо стрічки, що відповідають спостереженням із 0 хочаб в одному ЗНО та подивимося на розподіл.
+
+```{r delete_math0}
+df <- df[(df$math != 0) & (df$ukr != 0) ,]
+p1 <- plot_ly(x = df[, "math"], type = "histogram", name = "math")
+p2 <- plot_ly(x = df[, "ukr"], type = "histogram", name = "ukr")
+
+plotly::subplot(p1, p2) %>% layout(title = "Distribution of the passed EIT",
+  annotations = list(list(x = 0.2, y = 1.05, text = "math", showarrow = F, xref = 'paper', yref = 'paper'),
+                     list(x = 0.8, y = 1.05, text = "ukr", showarrow = F, xref = 'paper', yref = 'paper')))
+remove(p1); remove(p2);
+```
+
+Відмітимо, що наразі дуже відсіялася частка людей, котрі погано здали українську мову.
+
+Гістограма розсіювання, в свою чергу, виглядає наступним чином:
+
+```{r plot_no_math0}
+plot_ly(data = df, x = ~math, y = ~ukr, mode = "markers", type = "scatter") %>% layout(title = "Passed EIT results")
+```
+
+Варто відмітити, що для абітурієнтів, що склали математику краще ніж 160 балів, помітна тенденція, як правило, кращого складання ЗНО з математики.
+
+Подивимося на розподіли по кожній політичній силі окремо 
+(якщо конкретно обрана політична сила має для даного спостереження найбільший вплив, то дане спостереження відносимо до ціє політичної сили)
+
+* математика
+
+```{r separate_distribution_math}
+W <- as.data.frame(df[, -c(1, 2)])
+W[, "max_value"] <- apply(W, 1, max)
+
+all_plots <- list()
+annotations_list <- list()
+names_ <- names(W[, -ncol(W)])
+
+for (i in seq_along(names_)) {
+  name <- names_[i]
+  d <- df[W[, name] == W["max_value"], ]
+  if (nrow(d) != 0) {
+    all_plots[[name]] <- plot_ly(x = d[, "math"], type = "histogram", name = name)
+    annotations_list[[i]] <- list(x = 0.15*i, y = 1.005, text = name, showarrow = F, xref = 'paper', yref = 'paper')
+  }
+}
+
+plotly::subplot(all_plots) %>% 
+  layout(title = "Mathematics EIT according to political strength", annotations = annotations_list)
+
+remove(d); remove(all_plots); remove(annotations_list)
+```
+
+* українська мова
+
+```{r separate distribution_ukr}
+all_plots <- list()
+annotations_list <- list()
+
+for (i in seq_along(names_)) {
+  name <- names_[i]
+  d <- df[W[, name] == W["max_value"], ]
+  if (nrow(d) != 0) {
+    all_plots[[name]] <- plot_ly(x = d[, "ukr"], type = "histogram", name = name) 
+    annotations_list[[i]] <- list(x = 0.15*i, y = 1.005, text = name, showarrow = F, xref = 'paper', yref = 'paper')
+  }
+  
+}
+
+plotly::subplot(all_plots[["pro_ukr"]], all_plots[["not_voted"]]) %>% 
+  layout(title = "Ukr EIT according to political strength", annotations = annotations_list)
+
+remove(d); remove(all_plots); remove(annotations_list)
+```
+
+Відмітимо, що розподіл результатів ЗНО з математики не на стільки різниться від розподілу результатів з української.
+Також варто відмітити, значно меншу кількість абітурієнтів, котрі склали ЗНО з укр. мови в межах 100 з областей, що імовірніше підтримали про-українські позиції.
+
+
+```{r separate_scatters}
+all_plots <- list()
+for (name in names(W[, -ncol(W)])) {
+  d <- df[W[, name] == W["max_value"], ]
+  if (nrow(d) != 0) {WVPlots::ScatterHist(d, "math", "ukr", name, smoothmethod = "none", estimate_sig = FALSE,  minimal_labels = TRUE)}
+}
+```
+
+Із останньої пари зображень здається, що нижній поріг результатів української (для абітурієнтів із математикою > 160 балів) вищий у випадку про-українських регіонів.
+
+## Результати голосування
+
+Виведемо загальні характеристики кожної політичної сили:
+
+```{r primitive_analysis1}
+df <- read.csv2(file = "data/ZNOandVoating/input.csv", 
+                header = FALSE, sep = ";", dec = ",")
+names(df) <- c("ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+describe(df[, -c(1, 2)])
+```
+
+Одразу видно, що 22 унікальні значення в кожному стовпчику відповідають 22 областям України.
+Варто відмітити, що відсутні області, із переважними радикальними або опозиційними силами. 
+Також відмітимо що немає регіонів, у яких голоса віддані виключно за малі політичні партії.
+
+Розподіл абітурієнтів по областях:
+
+```{r ab_distrib}
+ab <- plyr::ddply(.data = df, .variables = .(pro_ukr, radical, opposition, small, not_voted), .fun = nrow)
+plot_ly(ab, y = ~V1, type = "bar") %>% 
+  layout(title = "Abiturients distribution according regions", 
+         xaxis = list(title = "Region ID"), yaxis = list(title = ""))
+```
+Варто відмітити, що два регіони надто відрізняються чисельністю.
+Через таку зміщенність даних можуть бути зміщені результати.
+
+Із розподілу відсотків підтримки кожної політичної сили відповідно до регіону видно, що більшість регіонів є політично неактивними.
+Також варто відмітити, що розподіли голосів малих партії, у більшості випадків, збігається з розподілом голосів радикальної партії.
+
+```{r region_political_distr}
+plot_ly(y = ab[, "pro_ukr"], type = "bar", name = "pro_ukr") %>%
+  add_trace(y = ab[, "not_voted"], name = "not_voted") %>%
+  add_trace(y = ab[, "radical"], name = "radical") %>%
+  add_trace(y = ab[, "opposition"], name = "opposition") %>%
+  add_trace(y = ab[, "small"], name = "small")
+remove(ab)
+```
+## Висновок аналізу даних
+
+На основі порівняння розподілів можна зробити висновок про те, що дані можуть бути описані за допомогою моделі суміші зі змінними концентраціями.
+Проте, зважаючи на кореляції та відсоткові співвідношення, можливо, модель суміші зі змінними концентраціями, буде не надто еффективною.
+
+## Розбиття
+
+Розіб'ємо вибірку на тренувальну та тестову частини у відсотковому співвідношенні 80/20%.
+Далі, тренувальну частину розіб'ємо на 5-частин для проведення 5-ти фолдової кроссвалідації з метою визначення оптимального для кожної компоненти параметра згладжування h.
+Узагалі кажучи, можливо, варто було б врахувати незбалансованість даних під час розбиття, проте ми цього не робили.
+
+```{r cross_val_split}
+df <- read.csv2(file = "data/ZNOandVoating/input.csv", 
+                header = FALSE, sep = ";", dec = ",")
+names(df) <- c("ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+
+df[, -c(1, 2)] <- df[, -c(1, 2)]/100
+df <- df[(df$math != 0) & (df$ukr != 0) ,]
+
+train_test_list <- train_test_split(df, ratio = 0.80)
+
+train <- train_test_list[["train"]]
+test <- train_test_list[["test"]]
+
+cv_split <- cross_validation_split(train)
+remove(df); remove(train_test_list)
+```
+
+# Узагальнені оцінки Надарая-Ватсона
+
+## Визначення параметрів згладжування
+
+Скористаємося 5-ти фолдовою кросс-валідацією для знаходження оптимальних параметрів згладжування для кожної моделі.
+Для визначення оптимального параметра використаємо МНК зважений модулем вагових коефіцієнтів:
+
+$$MSE^{(m)} = \frac{1}{N} | \sum_{i=1}^{N}{a_{i:N}^{(m)}(Y_i - \hat{g}^{(m)}(X_i))^2} |$$
+Зауважимо, що модуль використовується для того щоб підчас підрахунків середнього зваженого MSE по всіх фолдах фіксованої компоненти, фіксованого h, не отримати 0 (який може бути хибно протрактований).
+
+Отже, визначення оптимальних параметрів h відбувається за схемою описаною нижче.
+
+* Зафіксуємо h, порахуємо зважений МНК для кожного фолда та знайдемо середнє та дисперсію по 5-ти фолдам для кожної компоненти.
+  (Так прорахуємо для кожного фіксованого h.)
+
+* Відкинемо 25% значень середніх, які відповідають найбльшим значенням дисперсії. 
+  Таким чином залишаємо лише ті результати, на яких моделі показали більш стабільну поведінку.
+
+* Серед значень середніх результатів моделей визначаємо h, які відповідають найменшим середнім зваженим МНК (окремо для кожної компоненти).
+
+Результат середніх та диспресії збережемно в змінній $GNW_cv_results$, а оптимальні $h$, серед запропонованих для перебору, у змінну $h_opt$.
+
+
+```{r train_predict_save1}
+h_range <- c(seq(0.1, 1, 0.1), seq(1.5, 5, 0.5))
+
+GNW_cv_results <- GNWcv_across_h(h_range = h_range, 
+                                 cv_df_split = cv_split, 
+                                 X_colname = "math", Y_colname = "ukr", 
+                                 W_colname = c("pro_ukr", "radical", "opposition", "small", "not_voted"), 
+                                 use_parallel = TRUE)
+
+h_opt <- optimal_h(GNW_cv_results)
+
+remove(cv_split); remove(h_range)
+```
+
+Збережемо про всяк випадок результати середніх та дисперсій кросс-валідації.
+
+```{r save_pred1}
+write.csv(GNW_cv_results, file = "data/computation_results/5_cv_mean_std.csv", row.names = TRUE)
+```
+
+## Порівняння результатів кросс-валідації та прогнозування на відкладеній вибірці
+
+```{r 3compread_pred1}
+# GNW_cv_results <- read.csv("data/computation_results/5_cv_mean_std.csv",  row.names = NULL, header= TRUE)
+# names_ <- GNW_cv_results[, "X"]
+# GNW_cv_results <- as.matrix(GNW_cv_results[, -1], mode="numeric")
+# rownames(GNW_cv_results) <- as.vector(names_, mode="character")
+# GNW_cv_results
+# 
+# h_opt <- optimal_h(GNW_cv_results)
+# h_opt
+```
+
+Порівняємо тепер результати кросс-валідації з результатми прогнозування на тестовій частині даних.
+
+```{r comparing_cross_val_test}
+GNW <- GeneralisedNadarayaWatson$new()
+GNW$train(X_train = as.numeric(train[, "math"]), 
+          Y_train = as.numeric(train[, "ukr"]), 
+          W_train = as.matrix(train[, -c(1, 2)]))
+GNW$run_cluster()
+prediction_with_acoeff <- GNW$predict_in_parallel(X_test = as.numeric(test[, "math"]), 
+                                                  W_test = as.matrix(test[, -c(1, 2)]), h = h_opt)
+GNW$stop_cluster()
+
+prediction <- prediction_with_acoeff[["prediction"]]
+A_coeff <- prediction_with_acoeff[["A_test"]] 
+
+remove(GNW); remove(train)
+```
+
+Порахуємо зважену суму МНК для прогнозу зробленого на тестових даних.
+
+```{r weighted_RMSE_tst_prediction}
+WMSE <- weighted_MSE(Y_true = as.numeric(test[, "ukr"]), Y_predicted = prediction, A_coeff = A_coeff)
+```
+
+Відмітимо, що найменше значення зваженого МНК для моделей, що відповідають проукраїнській силі та тим, хто не прогоолосував.
+Нагадаємо, найбільша по модулю кореляція спостерігалася між результатами ЗНО з української мовои та проукр. силами й тими, хто не проголосував.
+Також відмітимо, що раніше ми змогли виділити лише регіони, де переважає проукр напрямок та ті, в яких переважає не голосування.
+Тобто не виявилось регіонів, у яких переважають голоси за радикалів, за опозицію або за малі партії.
+
+Порівняємо з результатами крос-валідації з відповідними параметрами згладжування.
+
+```{r comparing_cv_test_WMSE}
+cv_mean_results <- sapply(1:length(h_opt), 
+                          function(i){
+                            GNW_cv_results[which("mean_" %&% as.character(h_opt[i]) == rownames(GNW_cv_results)), i]
+                            })
+cv_test_comparing <- rbind(cv_mean_results, WMSE)
+rownames(cv_test_comparing) <- c("cross-validation", "test")
+colnames(cv_test_comparing) <- 1:5
+print(cv_test_comparing)
+```
+
+Із  останньої таблиці видно, що квадрати залишків першої моделі та останньої, порахованих для кросс-валідації та на відкладеній тестовій вибірці не надто різняця у порівнянні з іншими компонентами.
+
+Це свідчить про більш-менш вдалий підбір параметрів згладжування для моделей, що відповідають проукраїнському настрою та байдужому.
+
+Для 3 інших моделей результати невтішні. Останнє може бути зумовлене слабкою представленістю відповідних класів у вибірці.
+Можливо є сенс розглянути 3-х компонентну суміш: проукраїнську направленість, "не проукраїнську" (об'єднати результати голосуваня за малі партії, опозицію, радикалів) та "байдужих".
+
+## Візуалізація результатів
+
+Зобразмо спочатку загальну картину: гістограму розсіювання з усіма прознозами для всіх моделей:
+
+```{r scatter_test_prediction}
+plot_ly(data = test, x = ~math, y = ~ukr, mode = "markers", type = "scatter", name="EIT results") %>% 
+  add_trace(x=sort(test[, "math"]), y = prediction[sort(test[, "math"], index.return = TRUE)$ix, 1], name = "pro_ukr",  mode = 'lines+markers') %>%
+  add_trace(x=sort(test[, "math"]), y = prediction[sort(test[, "math"], index.return = TRUE)$ix, 2], name = "radical",  mode = 'lines+markers') %>%
+  add_trace(x=sort(test[, "math"]), y = prediction[sort(test[, "math"], index.return = TRUE)$ix, 3], name = "opposition",  mode = 'lines+markers') %>%
+  add_trace(x=sort(test[, "math"]), y = prediction[sort(test[, "math"], index.return = TRUE)$ix, 4], name = "small",  line=list(color="yellow"), marker=list(color="yellow", line=list(color="yellow")), mode = 'lines+markers') %>%
+  add_trace(x=sort(test[, "math"]), y = prediction[sort(test[, "math"], index.return = TRUE)$ix, 5], name = "not_voted",  mode = 'lines+markers') %>%
+  layout(title = "Passed EIT results (test dataset)")
+```
+
+Окремо зобразимо для абітурієнтів, які проживають в областях, що ймовірніше наслідують проукраїнську групу або не голосують:
+
+
+```{r hilight_groups}
+
+Wtest <- as.data.frame(cbind(prediction, test[, -c(1, 2)]))
+Wtest[, "max_value"] <- apply(Wtest[, -(1:5)], 1, max)
+
+pro_ukr <- test[Wtest[, "pro_ukr"] == Wtest["max_value"], ]
+p1 <- plot_ly(data = pro_ukr, x = ~math, y = ~ukr, mode = "markers", type = "scatter", name = "EIT results in pro_ukr regions") %>% 
+  add_trace(x = test[rownames(pro_ukr), "math"], 
+            y = Wtest[rownames(pro_ukr), 1], name = "pro_ukr model",  mode = 'markers')
+
+
+not_voted <- test[Wtest[, "not_voted"] == Wtest["max_value"], ]
+
+p2 <- plot_ly(data = not_voted, x = ~math, y = ~ukr, mode = "markers", type = "scatter", name = "EIT results in not voted regions") %>%
+  add_trace(x = test[rownames(not_voted), "math"],
+            y = Wtest[rownames(not_voted), 5], name = "not_voted model",  mode = 'markers')
+
+plotly::subplot(p1, p2)
+rm(list = setdiff(ls(), lsf.str()))
+```
+
+Відмітимо, що основні тренди моделі для проукраїнських регіонів збереглися і лише кілька прогнозів вийшли надто далеко за межі допустимих оцінок (0 - 200).
