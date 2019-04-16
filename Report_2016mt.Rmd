@@ -1,0 +1,44 @@
+---
+title: "Прогнозування результатів ЗНО з української мови узагальненими оцінками Надарая-Ватосна\n(компоненти суміші на основі статистичних даних рідних мов в регіонах України)"
+output: 
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE}
+library(plotly)
+library(Hmisc)
+library(WVPlots)
+library(plyr)
+source("tools/DataSplitTools.R")
+source("tools/GeneralizedNadarayaWatson.R")
+source("tools/CommonTools.R")
+source("tools/CrossValTools.R")
+```
+
+# Аналіз даних ЗНО 2016 року та статистики рідних мов
+
+Зчитаємо дані:
+
+```{r read_data}
+df <- read.csv2(file = "data/ZNOandVoating/input.csv", header = FALSE, sep = ";", dec = ",")
+names(df) <- c("ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+
+head(df, 3)
+```
+
+## ЗНО з математики та української мови
+
+Виведемо загальні характеристики даних ЗНО з математики та української мови:
+
+```{r primitive_analysis}
+df <- read.csv2(file = "data/ZNOandVoating/input_2018.csv", header = TRUE, fileEncoding = "CP1251", sep = ",", dec=".", row.names = 1)
+names(df) <- c("ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+
+describe(df)
+```
