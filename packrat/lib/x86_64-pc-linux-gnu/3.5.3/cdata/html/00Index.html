@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>R: Fluid Data Transformations</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+<h1> Fluid Data Transformations
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]" />
+</h1>
+<hr/>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
+</div><h2>Documentation for package &lsquo;cdata&rsquo; version 1.0.9</h2>
+
+<ul><li><a href="../DESCRIPTION">DESCRIPTION file</a>.</li>
+<li><a href="../doc/index.html">User guides, package vignettes and other documentation.</a></li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="cdata.html">cdata-package</a></td>
+<td>'cdata': Fluid Data Transformations.</td></tr>
+<tr><td style="width: 25%;"><a href="grapes-times-times-grapes.html">%**%</a></td>
+<td>Multiply/join row records into block records.</td></tr>
+<tr><td style="width: 25%;"><a href="grapes-slash-slash-grapes.html">%//%</a></td>
+<td>Factor-out (aggregate/project) block records into row records.</td></tr>
+<tr><td style="width: 25%;"><a href="blocks_to_rowrecs.html">blocks_to_rowrecs</a></td>
+<td>Map sets rows to columns (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="blocks_to_rowrecs.html">blocks_to_rowrecs.default</a></td>
+<td>Map sets rows to columns (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="blocks_to_rowrecs.html">blocks_to_rowrecs.relop</a></td>
+<td>Map sets rows to columns (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="blocks_to_rowrecs_spec.html">blocks_to_rowrecs_spec</a></td>
+<td>Create a block records to row records transform specification.</td></tr>
+<tr><td style="width: 25%;"><a href="build_pivot_control.html">build_pivot_control</a></td>
+<td>Build a blocks_to_rowrecs()/rowrecs_to_blocks() control table that specifies a pivot from a 'data.frame'.</td></tr>
+<tr><td style="width: 25%;"><a href="build_pivot_control.html">build_pivot_control.default</a></td>
+<td>Build a blocks_to_rowrecs()/rowrecs_to_blocks() control table that specifies a pivot from a 'data.frame'.</td></tr>
+<tr><td style="width: 25%;"><a href="build_pivot_control.html">build_pivot_control.relop</a></td>
+<td>Build a blocks_to_rowrecs()/rowrecs_to_blocks() control table that specifies a pivot from a 'data.frame'.</td></tr>
+<tr><td style="width: 25%;"><a href="build_unpivot_control.html">build_unpivot_control</a></td>
+<td>Build a rowrecs_to_blocks() control table that specifies a un-pivot (or "shred").</td></tr>
+<tr><td style="width: 25%;"><a href="cdata.html">cdata</a></td>
+<td>'cdata': Fluid Data Transformations.</td></tr>
+<tr><td style="width: 25%;"><a href="convert_records.html">convert_records</a></td>
+<td>General transform from arbitrary record shape to arbitrary record shape.</td></tr>
+<tr><td style="width: 25%;"><a href="layout_by.html">layout_by</a></td>
+<td>Use transform spec to layout data.</td></tr>
+<tr><td style="width: 25%;"><a href="layout_by.blocks_to_rowrecs_spec.html">layout_by.blocks_to_rowrecs_spec</a></td>
+<td>Use transform spec to layout data.</td></tr>
+<tr><td style="width: 25%;"><a href="layout_by.rowrecs_to_blocks_spec.html">layout_by.rowrecs_to_blocks_spec</a></td>
+<td>Use transform spec to layout data.</td></tr>
+<tr><td style="width: 25%;"><a href="unpivot_to_blocks.html">layout_to_blocks</a></td>
+<td>Move values from columns to rows (anti-pivot, or "shred").</td></tr>
+<tr><td style="width: 25%;"><a href="pivot_to_rowrecs.html">layout_to_rowrecs</a></td>
+<td>Move values from rows to columns (pivot).</td></tr>
+<tr><td style="width: 25%;"><a href="map_fields.html">map_fields</a></td>
+<td>Map field values from one column into new derived columns (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="map_fields_q.html">map_fields_q</a></td>
+<td>Map field values from one column into new derived columns (query based, takes name of table).</td></tr>
+<tr><td style="width: 25%;"><a href="unpivot_to_blocks.html">pivot_to_blocks</a></td>
+<td>Move values from columns to rows (anti-pivot, or "shred").</td></tr>
+<tr><td style="width: 25%;"><a href="pivot_to_rowrecs.html">pivot_to_rowrecs</a></td>
+<td>Move values from rows to columns (pivot).</td></tr>
+<tr><td style="width: 25%;"><a href="rowrecs_to_blocks.html">rowrecs_to_blocks</a></td>
+<td>Map a set of columns to rows (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="rowrecs_to_blocks.html">rowrecs_to_blocks.default</a></td>
+<td>Map a set of columns to rows (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="rowrecs_to_blocks.html">rowrecs_to_blocks.relop</a></td>
+<td>Map a set of columns to rows (takes a 'data.frame').</td></tr>
+<tr><td style="width: 25%;"><a href="rowrecs_to_blocks_spec.html">rowrecs_to_blocks_spec</a></td>
+<td>Create a row records to block records transform specification.</td></tr>
+<tr><td style="width: 25%;"><a href="run_cdata_tests.html">run_cdata_tests</a></td>
+<td>Run cdata package tests.</td></tr>
+<tr><td style="width: 25%;"><a href="unpivot_to_blocks.html">unpivot_to_blocks</a></td>
+<td>Move values from columns to rows (anti-pivot, or "shred").</td></tr>
+<tr><td style="width: 25%;"><a href="unpivot_to_blocks.html">unpivot_to_blocks.default</a></td>
+<td>Move values from columns to rows (anti-pivot, or "shred").</td></tr>
+<tr><td style="width: 25%;"><a href="unpivot_to_blocks.html">unpivot_to_blocks.relop</a></td>
+<td>Move values from columns to rows (anti-pivot, or "shred").</td></tr>
+</table>
+</body></html>

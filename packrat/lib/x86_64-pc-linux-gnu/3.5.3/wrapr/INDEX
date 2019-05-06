@@ -1,0 +1,138 @@
+%c%                     Inline list/array concatenate.
+%dot%                   Inline dot product.
+%in_block%              Inline let-block notation.
+%p%                     Inline character paste0.
+%qc%                    Inline quoting list/array concatenate.
+ApplyTo                 Apply a single argument function to its
+                        argument.
+Collector               Build a collector that can capture all pipe
+                        stages to the right.
+DebugFn                 Capture arguments of exception throwing
+                        function call for later debugging.
+DebugFnE                Capture arguments and environment of exception
+                        throwing function call for later debugging.
+DebugFnW                Wrap a function for debugging.
+DebugFnWE               Wrap function to capture arguments and
+                        environment of exception throwing function call
+                        for later debugging.
+DebugPrintFn            Capture arguments of exception throwing
+                        function call for later debugging.
+DebugPrintFnE           Capture arguments and environment of exception
+                        throwing function call for later debugging.
+PartialFunction-class   Function with partial arguments as a new single
+                        argument function.
+PartialNamedFn-class    Package qualified name of a function as a
+                        function.
+SrcFunction-class       Code text as a new partial function.
+UnaryFn-class           Functions that take a single argument
+UnaryFnList-class       List of Unary functions taken in order.
+VectorizeM              Memoizing wrapper to base::Vectorize()
+add_name_column         Add list name as a column to a list of
+                        data.frames.
+apply_left              S3 dispatch on class of pipe_left_arg.
+apply_left.default      S3 dispatch on class of pipe_left_arg.
+apply_left_default      S3 dispatch on class of pipe_left_arg.
+apply_right             S3 dispatch on class of pipe_right_argument.
+apply_right.default     Default apply_right implementation.
+apply_right_S4          S4 dispatch method for apply_right.
+as.UnaryFn              Convert a list of UnaryFns into a UnaryFn.
+as.list.UnaryFn         Get list of primative unary fns.
+as.list.UnaryFnList     Get list of primative unary fns.
+as_dot_fn               Convert an unevaluted pipeline into a function.
+as_fn                   Convert a pipeable object into a function.
+as_fnlist               Wrap a list of UnaryFns as a UnaryFnList.
+bquote_call             Treat ... call argument as bquoted-values.
+bquote_function         Adapt a function to use bquote on its
+                        arguments.
+buildNameCallback       Build a custom writeback function that writes
+                        state into a user named variable.
+build_frame             Build a data.frame from the user's description.
+c.UnaryFn               Combine UnaryFns
+checkColsFormUniqueKeys
+                        Check that a set of columns form unique keys.
+check_equiv_frames      Check two data.frames are equivilent after
+                        sorting columns and rows.
+clean_fit_glm           Fit a stats::glm without carying back large
+                        structures.
+clean_fit_lm            Fit a stats::lm without carying back large
+                        structures.
+coalesce                Coalesce values (NULL/NA on left replaced by
+                        values on the right).
+defineLambda            Define lambda function building function.
+dot_arrow               Pipe operator ("dot arrow", "dot pipe" or "dot
+                        arrow pipe").
+draw_frame              Render a simple data.frame in build_frame
+                        format.
+draw_framec             Render a simple data.frame in qchar_frame
+                        format.
+evalb                   eval(bquote(expr)) shortcut.
+execute_parallel        Execute f in parallel partitioned by
+                        partition_column.
+fnlist                  Wrap a list of functions as a function.
+format.PartialFunction
+                        format step
+format.PartialNamedFn   format step
+format.SrcFunction      format step
+format.UnaryFnList      format step
+grepdf                  Grep for column names from a 'data.frame'
+grepv                   Return a vector of matches.
+has_no_dup_rows         Check for duplicate rows.
+invert_perm             Invert a permutation.
+lambda                  Build an anonymous function.
+lapplym                 Memoizing wrapper for lapply.
+let                     Execute expr with name substitutions specified
+                        in alias.
+makeFunction_se         Build an anonymous function.
+map_to_char             format a map.
+map_upper               Map up-cased symbol names to referenced values
+                        if those values are string scalars (else
+                        throw).
+mapsyms                 Map symbol names to referenced values if those
+                        values are string scalars (else throw).
+match_order             Match one order to another.
+mk_formula              Construct a formula.
+mk_tmp_name_source      Produce a temp name generator with a given
+                        prefix.
+named_map_builder       Named map builder.
+orderv                  Order by a list of vectors.
+parLapplyLBm            Memoizing wrapper for parLapplyLB
+partition_tables        Partition as set of tables into a list.
+pkgfn                   Wrap the name of a function as a function.
+psagg                   Pseudo aggregator.
+qae                     Quote assignment expressions (name = expr, name
+                        := expr, name %:=% expr).
+qc                      Quoting version of c() array concatenate.
+qchar_frame             Build a quoted data.frame.
+qe                      Quote expressions.
+qs                      Quote argument as a string.
+reduceexpand            Use function to reduce or expand arguments.
+restrictToNameAssignments
+                        Restrict an alias mapping list to things that
+                        look like name assignments
+run_package_tests       Run package tests.
+run_wrapr_tests         Run wrapr package tests.
+seqi                    Increasing whole-number sequence.
+sequence_as_function    Convert a sequence of expressions into a
+                        function.
+show,PartialFunction-method
+                        S4 print method
+show,PartialNamedFn-method
+                        S4 print method
+show,SrcFunction-method
+                        S4 print method
+show,UnaryFnList-method
+                        S4 print method
+sinterp                 Dot substitution.
+sortv                   Sort a data.frame.
+split_at_brace_pairs    Split strings at -pairs.
+srcfn                   Wrap the source for an exprssion as a function.
+stop_if_dot_args        Stop with message if dot_args is a non-trivial
+                        list.
+strsplit_capture        Split a string, keeping separator regions
+uniques                 Strict version of unique (without ...).
+vapplym                 Memoizing wrapper for vapply.
+view                    Invoke a spreadsheet like viewer when
+                        appropriate.
+wrapfn                  Wrap the source for an exprssion as a function.
+wrapr                   'wrapr': Wrap R Functions for Debugging and
+                        Parametric Programming

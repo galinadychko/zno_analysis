@@ -1,0 +1,150 @@
+actualize_join_plan     Execute an ordered sequence of left joins.
+add_relop               Add a relop to the end of a relop_list.
+affine_transform        Implement an affine transformaton
+apply_right.relop       Execute pipeline treating pipe_left_arg as
+                        local data to be copied into database.
+apply_right_S4,ANY,relop_list-method
+                        Add a relop to the end of a relop_list (piped
+                        version).
+apply_right_S4,ANY,rquery_db_info-method
+                        Apply pipeline to a database.
+apply_right_S4,relop_list,rquery_db_info-method
+                        Materialize a stages list in pipe notation with
+                        relop_list on the left.
+apply_right_S4,rquery_db_info,relop_list-method
+                        Materialize a stages list in pipe notation with
+                        relop_list on the right.
+assign_slice            Assign a value to a slice of data (set of rows
+                        meeting a condition, and specified set of
+                        columns).
+build_join_plan         Build a join plan.
+column_names            Return column names
+columns_used            Return columns used
+commencify              Hyderdrive (science fiction show) synonym for
+                        'execute'
+complete_design         Complete an experimental design.
+count_null_cols         Count NULLs per row for given column set.
+db_td                   Construct a table description from a database
+                        source.
+describe_tables         Build a nice description of a table.
+drop_columns            Make a drop columns node (not a relational
+                        operation).
+execute                 Execute an operator tree, bringing back the
+                        result to memory.
+expand_grid             Cross product vectors in database.
+extend                  Extend data by adding more columns.
+extend_se               Extend data by adding more columns.
+format_node             Format a single node for printing.
+getDBOption             Get a database connection option.
+get_relop_list_stages   Return the stages list.
+graph_join_plan         Build a draw-able specification of the join
+                        diagram
+if_else_block           Build a sequence of statements simulating an
+                        if/else block-'if(){}else{}'.
+if_else_op              Build a 'relop' node simulating a per-row
+                        block-'if(){}else{}'.
+inspect_join_plan       check that a join plan is consistent with table
+                        descriptions.
+key_inspector_all_cols
+                        Return all columns as guess of preferred
+                        primary keys.
+key_inspector_postgresql
+                        Return all primary key columns as guess at
+                        preferred primary keys for a PostgreSQL handle.
+key_inspector_sqlite    Return all primary key columns as guess at
+                        preferred primary keys for a SQLite handle.
+local_td                Construct a table description of a local
+                        data.frame.
+lookup_by_column        Use one column to pick values from other
+                        columns.
+make_relop_list         Create a new 'rquery::relop' operator tree
+                        collector list
+map_column_values       Remap values in a set of columns.
+mark_null_cols          Indicate NULLs per row for given column set.
+materialize             Materialize an optree as a table.
+materialize_node        Create a materialize node.
+materialize_relop_list_stages
+                        Materialize a stages list on a database.
+mk_td                   Make a table description directly.
+natural_join            Make a natural_join node.
+non_sql_node            Wrap a non-SQL node.
+normalize_cols          Build an optree pipeline that normalizes a set
+                        of columns so each column sums to one in each
+                        partition.
+null_replace            Create a null_replace node.
+op_diagram              Build a diagram of a optree pipeline.
+order_expr              Make a order_expr node.
+order_expr_se           Make a order_expr node.
+orderby                 Make an orderby node (not a relational
+                        operation).
+pick_top_k              Build an optree pipeline that selects up to the
+                        top k rows from each group in the given order.
+pre_sql_sub_expr        pre_sql_sub_expr
+project                 project data by grouping, and adding aggregate
+                        columns.
+project_se              project data by grouping, and adding aggregate
+                        columns.
+quantile_cols           Compute quantiles of specified columns (without
+                        interpolation, needs a database with window
+                        functions).
+quantile_node           Compute quantiles over non-NULL values (without
+                        interpolation, needs a database with window
+                        functions).
+quote_identifier        Quote an identifier.
+quote_literal           Quote a value
+quote_string            Quote a string
+quote_table_name        Quote a table name.
+relop_list-class        List of 'rquery::relop' operator trees taken in
+                        order.
+rename_columns          Make a rename columns node (copies columns not
+                        renamed).
+row_counts              Build an optree pipeline counts rows.
+rq_colnames             List table column names.
+rq_coltypes             Get column types by example values as a
+                        data.frame.
+rq_connection_advice    Get advice for a DB connection (beyond tests).
+rq_connection_name      Build a canonical name for a db connection
+                        class.
+rq_connection_tests     Try and test database for some option settings.
+rq_copy_to              Copy local R table to remote data handle.
+rq_execute              Execute a query, typically an update that is
+                        not supposed to return results.
+rq_get_query            Execute a get query, typically a non-update
+                        that is supposed to return results.
+rq_nrow                 Count rows and return as numeric
+rq_remove_table         Remove table
+rq_table_exists         Check if a table exists.
+rquery                  'rquery': Relational Query Generator for Data
+                        Manipulation
+rquery_apply_to_data_frame
+                        Execute optree in an environment where d is the
+                        only data.
+rquery_db_info          Build a db information stand-in
+rquery_default_db_info
+                        An example 'rquery_db_info' object useful for
+                        formatting 'SQL' without a database connection.
+rstr                    Quick look at remote data
+rsummary                Compute usable summary of columns of remote
+                        table.
+rsummary_node           Create an rsumary relop operator node.
+run_rquery_tests        Run rquery package tests.
+select_columns          Make a select columns node (not a relational
+                        operation).
+select_rows             Make a select rows node.
+select_rows_se          Make a select rows node.
+setDBOpt                Set a database connection option.
+setDBOption             Set a database connection option.
+set_indicator           Make a set indicator node.
+show,relop_list-method
+                        S4 print method
+sql_expr_set            Build a query that applies a SQL expression to
+                        a set of columns.
+sql_node                Make a general SQL node.
+tables_used             Return vector of table names used.
+theta_join              Make a theta_join node.
+theta_join_se           Make a theta_join node.
+to_sql                  Return SQL implementation of operation tree.
+topo_sort_tables        Topologically sort join plan so values are
+                        available before uses.
+unionall                Make an unionall node (not a relational
+                        operation).

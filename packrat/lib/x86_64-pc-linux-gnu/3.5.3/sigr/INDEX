@@ -1,0 +1,131 @@
+Bernoulli_diff_stat     Compute the distribution of differences of
+                        replacement samples of two Binomial or
+                        Bernoulli experiments.
+TInterval               Wrap TInterval (test of Binomial/Bernoulli
+                        rate).
+TInterval.data.frame    Student-T tolerance-style interval around an
+                        estimate of a mean from a data.frame.
+TInterval.numeric       Student-T tolerance-style interval around an
+                        estimate of a mean from observations.
+TIntervalS              Student-T tolerance-style interval around an
+                        estimate of a mean from summary.
+as.character.sigr_statistic
+                        as.character
+calcAUC                 calculate AUC.
+calcDeviance            Calculate deviance.
+calcSSE                 Calculate sum of squared error.
+estimateDifferenceZeroCrossing
+                        Studentized estimate of how often a difference
+                        is below zero.
+format.sigr_statistic   Format
+getRenderingFormat      Detect rendering format (using knitr).
+permTestAUC             Perform AUC permutation test.
+permutationScoreModel   Empirical permutation test of significance of
+                        scoreFn(modelValues,yValues) >=
+                        scoreFn(modelValues,perm(yValues)).
+print.sigr_statistic    Print
+render                  Format summary roughly in "APA Style" (
+                        American Psychological Association ).
+render.sigr_Bernoulli_diff_test
+                        Format sigr_Bernoulli_diff_test (test of
+                        difference of Bernoulli processes).
+render.sigr_aucpairtest
+                        Format an AUC-test (quality of a probability
+                        score)
+render.sigr_aucpermtest
+                        Format an AUC-test (quality of a probability
+                        score)
+render.sigr_aucresamptest
+                        Format an AUC-test (quality of a probability
+                        score)
+render.sigr_binomtest   Format binom.test (test of rate of a
+                        Binomial/Bernoulli experiment).
+render.sigr_chisqtest   Format a chi-square test (quality of
+                        categorical prediction)
+render.sigr_cohend      Format Cohen-D (effect size between groups)
+render.sigr_cortest     Format cor.test (test of liner correlation).
+render.sigr_emptest     Format an empirical test (quality of
+                        categorical prediction)
+render.sigr_fishertest
+                        Format fisher.test (test of categorical
+                        independence).
+render.sigr_ftest       Format an F-test
+render.sigr_permtest    Format an empirical test (quality of
+                        categorical prediction)
+render.sigr_pwr_htest   Format a pwr-test
+render.sigr_significance
+                        Format a significance
+render.sigr_tinterval   Format a Student-T tolerance-style interval
+                        around an estimate of a mean.
+render.sigr_ttest       Format a T-test (difference in means by group)
+resampleScoreModel      Studentized bootstrap variance estimate for
+                        scoreFn(yValues,modelValues).
+resampleScoreModelPair
+                        Studentized bootstrap test of strength of
+                        scoreFn(yValues,model1Values) >
+                        scoreFn(yValues,model1Values).
+resampleTestAUC         Wrap AUC resampling test results.
+run_sigr_tests          Run sigr package tests.
+sigr                    sigr: Format Significance Summaries for Reports
+testAUCpair             Test AUC pair results.
+wrapBinomTest           Wrap binom.test (test of Binomial/Bernoulli
+                        rate).
+wrapBinomTest.data.frame
+                        Wrap binom.test (test of Binomial/Bernoulli
+                        rate).
+wrapBinomTest.htest     Wrap binom.test (test of Binomial/Bernoulli
+                        rate).
+wrapBinomTest.logical   Wrap binom.test (test of Binomial/Bernoulli
+                        rate).
+wrapBinomTest.numeric   Wrap binom.test (test of Binomial/Bernoulli
+                        rate).
+wrapBinomTestS          Wrap binom.test (test of Binomial/Bernoulli
+                        rate) from summary.
+wrapChiSqTest           Wrap quality of a categorical prediction
+                        roughly in "APA Style" ( American Psychological
+                        Association ).
+wrapChiSqTest.anova     Format ChiSqTest from anova of logistic model.
+wrapChiSqTest.data.frame
+                        Format ChiSqTest from data.
+wrapChiSqTest.glm       Format ChiSqTest from model.
+wrapChiSqTest.summary.glm
+                        Format ChiSqTest from model summary.
+wrapChiSqTestImpl       Format quality of a logistic regression roughly
+                        in "APA Style" ( American Psychological
+                        Association ).
+wrapCohenD              Wrap Cohen's D (effect size between groups).
+wrapCohenD.data.frame   Wrap Cohen's D (effect size between groups).
+wrapCohenD.numeric      Wrap Cohen's D (effect size between groups).
+wrapCorTest             Wrap cor.test (test of liner correlation).
+wrapCorTest.data.frame
+                        Wrap cor.test (test of liner correlation).
+wrapCorTest.htest       Wrap cor.test (test of liner correlation).
+wrapFTest               Wrap F-test (significance identity relation).
+wrapFTest.anova         Wrap quality statistic of a linear relation
+                        from anova.
+wrapFTest.data.frame    Wrap quality statistic of identity relation
+                        from data.
+wrapFTest.lm            Wrap quality statistic of identity r
+                        regression.
+wrapFTest.summary.lm    Wrap quality statistic of linear regression
+                        summary.
+wrapFTestImpl           Wrap F-test (significance of identity
+                        relation).
+wrapFTestezANOVA        Wrap quality statistic of a linear relation
+                        from ezANOVA (package ez).
+wrapFisherTest          Wrap fisher.test (test of categorical
+                        independence).
+wrapFisherTest.data.frame
+                        Wrap fisher.test (test of categorical
+                        independence).
+wrapFisherTest.htest    Wrap fisher.test (test of categorical
+                        independence).
+wrapFisherTest.table    Wrap fisher.test (test of categorical
+                        independence).
+wrapPWR                 Wrap pwr test (difference in means by group).
+wrapPWR.power.htest     Wrap pwr test.
+wrapSignificance        Wrap a significance
+wrapTTest               Wrap t.test (difference in means by group).
+wrapTTest.data.frame    Wrap t.test (difference in means by group).
+wrapTTest.htest         Wrap t.test (difference in means by group).
+wrapTTest.numeric       Wrap t.test (difference in means by group).

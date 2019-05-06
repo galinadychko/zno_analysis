@@ -1,0 +1,374 @@
+---
+title: "rquery Introduction"
+author: "John Mount, Win-Vector LLC"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rquery Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+[`rquery`](https://github.com/WinVector/rquery) is a 
+query generator for [`R`](https://www.r-project.org).  It is based on [Edgar F. Codd's relational
+algebra](https://en.wikipedia.org/wiki/Relational_algebra) plus experience using `SQL` 
+and [`dplyr`](https://CRAN.R-project.org/package=dplyr) at big data
+scale.  The design represents an attempt to make `SQL` more teachable by
+denoting composition by a sequential pipeline notation instead of nested
+queries or functions.  The implementation delivers reliable high 
+performance data processing on large data systems such as `Spark`
+and databases.
+Package features include: data processing trees
+or pipelines as observable objects (able to report both columns
+produced and columns used), optimized `SQL` generation as an explicit
+user visible modeling step, convenience methods for applying query
+trees to in-memory `data.frame`s, and low direct package dependencies.
+
+Let's set up our environment so we can work with examples.
+
+```{r chpkg} 
+run_vignette <- requireNamespace("DBI", quietly = TRUE) && 
+  requireNamespace("RSQLite", quietly = TRUE)
+```
+
+```{r setup, eval=run_vignette}
+library("rquery")
+library("wrapr")
+
+# example database connection
+db <- DBI::dbConnect(RSQLite::SQLite(),
+                     ":memory:")
+RSQLite::initExtension(db)
+
+# adapt to database
+dbopts <- rq_connection_tests(db)
+print(dbopts)
+options(dbopts)
+
+# register database
+old_o <- options(list("rquery.rquery_db_executor" = list(db = db)))
+```
+
+
+
+# Table descriptions
+
+`rquery` table descriptions are simple objects that store only 
+the name of a table and expected columns.  Any local data or database
+table that has at least the set of columns named in the table description
+can be used in a given `rquery` pipeline.
+
+```{r tabledescr1}
+# copy in example data
+rq_copy_to(
+  db, 'd',
+  data.frame(v = c(1, -5, 3)),
+  temporary = FALSE,
+  overwrite = TRUE)
+
+# produce a hande to existing table
+d <- db_td(db, "d")
+```
+
+The table description "`d`" we have been using in examples was produced
+as a result of moving data to a database by 
+[`rq_copy_to()`](https://winvector.github.io/rquery/reference/rq_copy_to.html).
+However we can also create a description of an existing database table with
+[`db_td()`](https://winvector.github.io/rquery/reference/db_td.html) or
+even build a description by hand with 
+[`mk_td()`](https://winvector.github.io/rquery/reference/mk_td.html).
+Also one can build descriptions of local or in-memory `data.frame`s with
+[`local_td()`](https://winvector.github.io/rquery/reference/local_td.html).
+
+# Operators
+
+The [`sql_node()`](https://winvector.github.io/rquery/reference/sql_node.html) 
+alone can make
+writing, understanding, and maintaining complex data transformations as queries
+easier.  And this node is a good introduction to some of the power of the 
+`rquery` package.  However, the primary purpose of `rquery` is to provide
+ready-made relational operators to further simplify to the point of rarely
+needing to use the `sql_node()` directly.
+
+The primary operators supplied by `rquery` are:
+
+The primary relational operators include:
+
+  * [`extend()`](https://winvector.github.io/rquery/reference/extend.html)/[`extend_se()`](https://winvector.github.io/rquery/reference/extend_se.html).  Extend adds derived columns to a relation table.  With a sufficiently powerful `SQL` provider this includes ordered and partitioned window functions.  This operator also includes built-in [`seplyr`](https://winvector.github.io/seplyr/)-style [assignment partitioning](https://winvector.github.io/seplyr/articles/MutatePartitioner.html).
+  * [`project()`](https://winvector.github.io/rquery/reference/project.html).  Project is usually *portrayed* as the equivalent to column selection, though the original definition includes aggregation.  In our opinion the original relational nature of the operator is best captured by moving `SQL`'s "`GROUP BY`" aggregation functionality.
+  * [`natural_join()`](https://winvector.github.io/rquery/reference/natural_join.html).  This a specialized relational join operator, using all common columns as an equi-join condition.
+  * [`theta_join()`](https://winvector.github.io/rquery/reference/theta_join.html).  This is the relational join operator allowing an arbitrary predicate.
+  * [`select_rows()`](https://winvector.github.io/rquery/reference/theta_join.html).  This is Codd's relational row selection.  Obviously `select` alone is an over-used and now ambiguous term (for example: it is already used as the "doit" verb in `SQL` and the *column* selector in `dplyr`).
+  * [`rename_columns()`](https://winvector.github.io/rquery/reference/rename_columns.html).  This operator renames sets of columns.
+  
+The primary non-relational (traditional `SQL`) operators are:
+
+  * [`select_columns()`](https://winvector.github.io/rquery/reference/select_columns.html).  This allows choice of columns (central to `SQL`), but is not a relational operator as it can damage row-uniqueness.
+  * [`orderby()`](https://winvector.github.io/rquery/reference/orderby.html). Row order is not a concept in the relational algebra (and also not maintained in most `SQL` implementations). This operator is only useful when used with its `limit=` option, or as the last step as data comes out of the relation store and is moved to `R` (where row-order is usually maintained).
+
+The above list (and especially naming) are chosen to first match Codd's relational concepts (`project`, `select`, `rename`, `join`, aggregation), `SQL` naming 
+conventions.  Notice this covers the [primary `dplyr` operators](http://dplyr.tidyverse.org) `mutate()` (Codd's `extend`), `select()` (not relational), `filter()` 
+(Codd's `select`, represented in `SQL` by "`WHERE`"), `summarise()` (Codd's `project` or aggregate concepts, triggered in `SQL` by "`GROUP BY`"), `arrange()` (not a 
+relational concept, implemented in `SQL` by "ORDER BY").  This correspondence is due to Codd's ideas and `SQL` driving data engineering 
+thinking for almost the last 50 years (both with and without credit or citation).
+
+With relational operators the user can work fast and work further away from syntactic details.
+For example some `R` operators (such as `is.na`) are translated to `SQL` analogues
+(in this case `IS NULL`).
+
+```{r isna, eval=run_vignette}
+d %.>% 
+  extend(., was_na := ifelse(is.na(v), 1, 0)) %.>%
+  to_sql(., db) %.>%
+  cat(.)
+```
+
+The exact translation depends on the database (which is why
+`to_sql()` takes a database argument).  Some care has to be taken
+as `SQL` types are different than `R` types (in particular for some
+databases logical types are not numeric).
+
+With a database that supplies window 
+functions one can quickly work the "logistic scoring by hand" example from  
+from [Let’s Have Some Sympathy For The Part-time R User](http://www.win-vector.com/blog/2017/08/lets-have-some-sympathy-for-the-part-time-r-user/).
+This example worked with `rquery` code that works with both `PostgreSQL` and `Spark` can be found [here](https://github.com/WinVector/rquery/blob/master/README.md).
+
+We can demonstrate the pipeline, but the `SQLite` database we are using in this vignette
+does not have the window functions required to execute it.  `PostgreSQL`, `Spark`, and many
+other databases do have the necessary functionality.  The pipeline is a good example of a non-trivial
+sequence of relational nodes.
+
+```{r logisticex, eval=run_vignette}
+scale <- 0.237
+
+dq <- mk_td("d3", 
+                   columns = qc(subjectID, 
+                                surveyCategory, 
+                                assessmentTotal)) %.>%
+  extend(.,
+             probability :=
+               exp(assessmentTotal * scale))  %.>% 
+  normalize_cols(.,
+                 "probability",
+                 partitionby = 'subjectID') %.>%
+  pick_top_k(.,
+             partitionby = 'subjectID',
+             orderby = c('probability', 'surveyCategory'),
+             reverse = c('probability')) %.>% 
+  rename_columns(., 'diagnosis' := 'surveyCategory') %.>%
+  select_columns(., c('subjectID', 
+                      'diagnosis', 
+                      'probability')) %.>%
+  orderby(., 'subjectID')
+```
+
+[`qc()`](https://winvector.github.io/wrapr/reference/qc.html) is "quoting concatenate", 
+a convenience function that lets us skip a few quote marks. No `list()`, `as.name()`, 
+or `quote()` steps are needed as the operator nodes are parsed by `R` to find
+identifiers.  The `scale` constant was added to the environment as pipelines try to 
+bind constants during pipe construction (else `scale` would be estimated to be
+a missing column name).
+
+Even though we are not going to run this query here, we can still 
+check some properties of the query.
+
+```{r logprops, eval=run_vignette}
+tables_used(dq)
+
+columns_used(dq)
+
+column_names(dq)
+```
+
+The operations can be printed as an operations tree.
+
+```{r printlogistic, eval=run_vignette}
+cat(format(dq))
+```
+
+Notice the returned presentation is not exactly the set of nodes we specified.  This is because of the nodes
+we used (`normalize_cols()` and `pick_top_k()`) are actually higher-order nodes (implemented in terms of nodes).
+Also `extend()` nodes are re-factored to be unambiguous in their use and re-use of column names.
+
+We can also exhibit the `SQL` this operations tree renders, to (though the `SQLite` database we are using
+in vignettes does not have the required window-functions to execute it; we suggest using `PostgreSQL`).
+
+```{r printlogisticsq, eval=run_vignette}
+cat(to_sql(dq, db))
+```
+
+The above query is long, but actually quite performant.
+
+To see the query executed, please see [here](https://github.com/WinVector/rquery/blob/master/README.md).
+
+# Non-`SQL` nodes
+
+Not all data transform steps can conveniently be written as a single `SQL`
+statement. To work around this potential limitation `rquery` supplies a special
+type of node called [`non_sql_node()`](https://winvector.github.io/rquery/reference/non_sql_node.html).
+`non_sql_node()` is used to implement arbitrary table to table transforms as
+`rquery` pipeline steps.  Two prototypical `non_sql_node()` is
+[`rsummary_node()`](https://winvector.github.io/rquery/reference/rsummary_node.html).
+
+`rsummary_node()` builds a table of summary information about another
+database table.  The format is each column of the original table 
+produces a row of summary information in the result table.  Here
+is a simple example.
+
+```{r rsummaryex, eval=run_vignette}
+d %.>%
+  rsummary_node(.) %.>%
+  execute(db, .)
+```
+
+Users can add additional 
+capabilities by writing their own `non_sql_node()`s.
+
+# Standard interfaces
+
+`rquery` goes out of its way to supply easy to program over
+value-oriented interfaces.  For any meta-programming we 
+suggest
+using [`wrapr::let()`](https://winvector.github.io/wrapr/reference/let.html), a powerful and [well-documented](https://github.com/WinVector/wrapr/blob/master/extras/wrapr_let.pdf) 
+meta-programming system.
+
+# Assignment partitioning
+
+`rquery` accepts many assignment in a `sql_node()` or in 
+a single `extend` node.  The `extend` node comes with 
+automatic [assignment partitioning] to ensure correct and
+performant results.  This allows the user to write large 
+`extend` blocks and know they will be executed correctly.
+
+Here is an example.
+
+```{r assignmentpart, eval=run_vignette}
+ot <- mk_td('d4',
+                   columns = qc('a', 'b', 'c', 'd')) %.>%
+  extend(., 
+             x = a + 1,
+             y = x + 1,
+             u = b + 1,
+             v = c + 1,
+             w = d + 1)
+
+cat(format(ot))
+```
+
+Notice the dependent assignment was moved into its own extend block.
+This sort of transform is critical in getting correct results from `SQL`
+([here](http://www.win-vector.com/blog/2018/01/advisory-on-multiple-assignment-dplyrmutate-on-databases/) is an example of what can happen when one does not correctly mitigate this issue).
+
+A node that uses the assignment partitioning and re-ordering is the 
+[`if_else_block()`](https://winvector.github.io/rquery/reference/if_else_block.html) which can
+be used to simulate block-oriented if-else semantics as seen in
+systems such as `SAS` (also meaning `rquery` can be critical porting code from `SAS` to `SQL` based `R`).
+This allows coordinated assignments such as the following:
+
+```{r ifelseblock, eval=run_vignette}
+ifet <- mk_td("d5",
+                     columns = "test") %.>%
+  extend_se(.,
+            c(qae(x = '',
+                  y = ''),
+              if_else_block(
+                qe(test > 5),
+                thenexprs = qae(x = 'a', 
+                                y = 'b'),
+                elseexprs = qae(x = 'b', 
+                                y = 'a')
+              )))
+cat(format(ifet))
+```
+
+As you can see, the `if_else_block()` works by landing the test in a column and
+then using that column to conditional all further statements. [`qe()`](https://winvector.github.io/wrapr/reference/qe.html) and [`qae()`](https://winvector.github.io/wrapr/reference/qae.html)
+are quoting convenience functions.  Note the `if_else_block` depends on 
+`x` and `y` being defined before entering the block, as they are self-assigned (
+this is checked by the `extend` node).
+The `if_else_block()` returns a list of assignments, which then used in the
+`extend_se()` statement, which in turn is re-factored into a sequence of 
+safe extend nodes.
+
+
+# Performance
+
+As `rquery` pipelines are factored into stages 
+similar to the common relational operators they tend to
+be very compatible with downstream query optimizers.  We
+think some of the advantage is the fact that `rquery` deliberately
+does not have a `group_by` operator, but instead considers this
+as the `partitionby` attribute of a [`project()` node](https://winvector.github.io/rquery/reference/project.html)
+(non-trivial example [here](https://github.com/WinVector/rquery/blob/master/README.md)).
+
+We have seen database based `rquery` outperform both in-memory `dplyr`
+and database based `dplyr` 
+
+> <img src="runtimes_1.png">
+>
+> (Figure from: [here](http://www.win-vector.com/blog/2018/01/rquery-fast-data-manipulation-in-r/).)
+
+In addition `rquery` includes automatic column narrowing: where only columns
+used to construct the final result are pulled from initial tables.  This feature
+is important in production (where data marts can be quite wide) and
+has show significant additional performance advantages
+
+From a coding point of view the automatic narrowing effect looks like this.
+
+```{r, eval=run_vignette}
+wp <- mk_td(table = 'd6',
+                   columns = letters[1:5]) %.>%
+  extend(., res := a + b)
+
+# full query
+cat(to_sql(wp, db))
+
+# longer pipeline
+wn <- wp %.>%
+  select_columns(., "res")
+
+# notice select at end of the pipeline automatically 
+# gets propagated back to the beginning of the
+# pipeline
+cat(to_sql(wn, db))
+```
+
+A graph of the the effects of this kind of narrowing (for `dplyr` by hand as `dplyr` currently 
+does not have the above type of automatic query analysis/optimization) shows the sensitivity
+to this optimization.
+
+> <img src="present-2.png">
+>
+> (Figure from: [here](https://github.com/WinVector/rquery/blob/master/extras/PerfTest.md), please see also 
+[here](http://www.win-vector.com/blog/2017/12/how-to-greatly-speed-up-your-spark-queries/).)
+
+
+# Conclusion
+
+`rquery` is new package, but it is already proving to be correct (avoiding [known data processing issues](http://www.win-vector.com/blog/2018/01/advisory-on-multiple-assignment-dplyrmutate-on-databases/)) and [performant](http://www.win-vector.com/blog/2018/01/advisory-on-multiple-assignment-dplyrmutate-on-databases/).
+For working with `R` at a big data scale (say using `PostgreSQL` or `Spark`)
+`rquery` is the right specialized tool for specifying data manipulation.
+
+# See also
+
+For deeper dives into specific topics, please see also:
+
+  * [`rquery README`](https://winvector.github.io/rquery/index.html)
+  * [Join Controller](https://github.com/WinVector/rquery/blob/master/extras/JoinController.md)
+  * [Join Dependency Sorting](https://github.com/WinVector/rquery/blob/master/extras/DependencySorting.md)
+  * [PerfTest](https://github.com/WinVector/rquery/blob/master/extras/PerfTest.md)
+  * [Assignment Partitioner](https://github.com/WinVector/rquery/blob/master/extras/AssigmentPartitioner.md)
+  * [DifferentDBs](https://github.com/WinVector/rquery/blob/master/extras/ExtraDBs.md)
+  * [`data.table based` implementation](https://github.com/WinVector/rqdatatable)
+
+------------
+
+# Appendix: Always clean up on the way out
+
+```{r cleanup, eval=run_vignette}
+options(old_o)
+DBI::dbDisconnect(db)
+```
+

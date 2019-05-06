@@ -19,6 +19,4 @@ NeedsCompilation: no
 Packaged: 2018-11-13 23:16:36 UTC; kevin
 Repository: CRAN
 Date/Publication: 2018-11-14 08:40:02 UTC
-Built: R 3.5.3; ; 2019-04-16 21:33:29 UTC; unix
-InstallAgent: packrat 0.5.0
-InstallSource: source
+Built: R 3.5.3; ; 2019-04-22 16:19:29 UTC; unix

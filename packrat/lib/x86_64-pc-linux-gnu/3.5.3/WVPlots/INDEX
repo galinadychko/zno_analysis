@@ -1,0 +1,52 @@
+BinaryYScatterPlot      Plot a scatter plot of a binary variable with
+                        smoothing curve.
+ClevelandDotPlot        Plot a Cleveland dot plot.
+ConditionalSmoothedScatterPlot
+                        Plot a scatter plot with smoothing line.
+DiscreteDistribution    Plot distribution of a single discrete
+                        numerical variable.
+DoubleDensityPlot       Plot two density plots conditioned on an
+                        outcome variable.
+DoubleHistogramPlot     Plot two histograms conditioned on an outcome
+                        variable.
+GainCurvePlot           Plot the cumulative gain curve of a sort-order.
+GainCurvePlotC          Plot the cumulative gain curve of a sort-order
+                        with costs.
+GainCurvePlotWithNotation
+                        Plot the cumulative gain curve of a sort-order
+                        with extra notation
+HexBinPlot              Build a hex bin plot
+LiftCurvePlot           Plot the cumulative lift curve of a sort-order.
+LogLogPlot              Log-log plot
+PRPlot                  Plot Precision-Recall plot.
+PRTPlot                 Plot Precision-Recall or Enrichment-Recall as a
+                        function of threshold.
+PairPlot                Build a pair plot
+PlotDistCountNormal     Plot distribution details as a histogram plus
+                        matching normal
+PlotDistDensityBeta     Plot an empirical density with the matching
+                        beta distribution
+PlotDistDensityNormal   Plot an empirical density with the matching
+                        normal distribution
+PlotDistHistBeta        Plot distribution details as a histogram plus
+                        matching beta
+ROCPlot                 Plot receiver operating characteristic plot.
+ROCPlotPair             Compare two ROC plots.
+ROCPlotPair2            Compare two ROC plots.
+ScatterBoxPlot          Plot a scatter box plot.
+ScatterBoxPlotH         Plot a scatter box plot in horizontal mode.
+ScatterHist             Plot a scatter plot with marginals.
+ScatterHistC            Plot a conditional scatter plot with marginals.
+ScatterHistN            Plot a height scatter plot with marginals.
+ShadedDensity           Plot the distribution of a variable with a tail
+                        shaded
+ShadedDensityCenter     Plot the distribution of a variable with a
+                        center region shaded
+ShadowHist              Plot a Shadow Histogram Plot
+ShadowPlot              Plot a Shadow Bar Plot
+WVPlots                 WVPlots: Common Plots for Analysis
+plot_Keras_fit_trajectory
+                        Plot the trajectory of a Keras model fit.
+plot_fit_trajectory     Plot the trajectory of a model fit.
+plotlyROC               Use 'plotly' to produce a ROC plot.
+run_WVPlots_tests       Run WVPlots package tests.
