@@ -16,12 +16,14 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                        A = NULL,
                                        h = NULL,
                                        max_threads = max_threads,
+                                       random_seed = NULL,
                                        initialize = function(){
                                          self$X_train <- NULL
                                          self$Y_train <- NULL
                                          self$A <- NULL
                                          self$h <- NULL
                                          self$max_threads <- max_threads
+                                         self$random_seed <- 42
                                        },
                                        train = function(X_train, Y_train, W_train, h){
                                          if (!is.vector(X_train, mode = "numeric") | 
@@ -76,13 +78,14 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                          if (length(X_test) != nrow(W_test))
                                            {stop("Not correct input dimensions")}
                                          n_rows <- length(X_test)
-                                         list_of_parts <- split_k_parts(k = self$max_threads, nrows = n_rows)
+                                         list_of_parts <- split_k_parts(k = self$max_threads, nrows = n_rows, 
+                                                                        random_seed = self$random_seed)
                                          res <- foreach(each_part = list_of_parts,
                                                         .combine = list,
                                                         .multicombine = TRUE,
-                                                        .export = c("self", "W_test", "h")) %dopar% {
+                                                        .export = c("self", "W_test")) %dopar% {
                                                           pr <- self$predict(X_test[each_part],
-                                                                             matrix(W_test[each_part, ], nrow = length(each_part)), self$h)
+                                                                             matrix(W_test[each_part, ], nrow = length(each_part)))
                                                           pr$prediction
                                                           }
                                           return(list("prediction" = do.call(rbind, res), 
