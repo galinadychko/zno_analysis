@@ -14,16 +14,19 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                        X_train = NULL,
                                        Y_train = NULL,
                                        A = NULL,
+                                       h = NULL,
                                        max_threads = max_threads,
                                        initialize = function(){
                                          self$X_train <- NULL
                                          self$Y_train <- NULL
                                          self$A <- NULL
+                                         self$h <- NULL
                                          self$max_threads <- max_threads
                                        },
-                                       train = function(X_train, Y_train, W_train){
+                                       train = function(X_train, Y_train, W_train, h){
                                          if (!is.vector(X_train, mode = "numeric") | 
                                              !is.vector(Y_train, mode = "numeric") | 
+                                             !is.vector(h, mode = "numeric") | 
                                              !is.matrix(W_train))
                                            {stop("Not correct class attributes")}
                                          
@@ -33,15 +36,16 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                          self$X_train <- X_train
                                          self$Y_train <- Y_train
                                          self$A <- acoeff(W_train)
+                                         self$h <- h
                                        }, 
-                                       predict = function(X_test, W_test, h){
+                                       predict = function(X_test, W_test){
                                          if (is.numeric(X_test) != TRUE | 
-                                             is.numeric(h) != TRUE | 
                                              is.matrix(W_test) != TRUE)
                                            {stop("Not correct class attributes")}
                                          if (is.null(self$X_train) | 
                                              is.null(self$Y_train) |
-                                             is.null(self$A))
+                                             is.null(self$A) |
+                                             is.null(self$h))
                                            {stop("The model was not trained correctly")}
                                          if (!is.null(self$A))
                                            {if (any(is.na(self$A))) {stop("The model coefficients are not numbers")}}
@@ -51,20 +55,20 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                                            function(x, h){
                                                              res <- nw_any_components(x, self$X_train, self$Y_train, h, self$A)
                                                              return(res)
-                                                           }, h = h)
+                                                           }, h = self$h)
                                          return(list("prediction" = t(results), 
                                                      "A_test" = tryCatch(acoeff(W_test),
                                                                          error = function(e){
-                                                                           return(paste0("acoeff caused the error while predict: '", e, "'"))
+                                                                           return(paste0("Acoeff caused the error while predict: '", e, "'"))
                                                                            })))
                                        },
-                                       predict_in_parallel = function(X_test, W_test, h){
+                                       predict_in_parallel = function(X_test, W_test){
                                          if (is.numeric(X_test) != TRUE | 
-                                             is.numeric(h) != TRUE |
                                              is.matrix(W_test) != TRUE)
                                            {stop("Not correct class attributes")}
                                          if (is.null(self$X_train) | 
                                              is.null(self$Y_train) |
+                                             is.null(self$h) |
                                              is.null(self$A))
                                            {stop("The model was not trained correctly")}
                                          if (!is.null(self$A))
@@ -78,7 +82,7 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                                         .multicombine = TRUE,
                                                         .export = c("self", "W_test", "h")) %dopar% {
                                                           pr <- self$predict(X_test[each_part],
-                                                                             matrix(W_test[each_part, ], nrow = length(each_part)), h)
+                                                                             matrix(W_test[each_part, ], nrow = length(each_part)), self$h)
                                                           pr$prediction
                                                           }
                                           return(list("prediction" = do.call(rbind, res), 
