@@ -94,7 +94,8 @@ select_h <- function(M_indx, M){
                        smallest_mean <- df[ind[, i], i][1]
                        name <- names(smallest_mean)
                        h_char <- substring(name, 6, nchar(name))
-                       return(as.numeric(h_char))
+                       names(smallest_mean) <- NULL
+                       return(c(smallest_mean, as.numeric(h_char)))
                      }, 
                      ind = M_indx, df = M)
   return(cut_mean)
