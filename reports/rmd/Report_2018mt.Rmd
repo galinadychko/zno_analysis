@@ -1,0 +1,291 @@
+---
+title: "Прогнозування результатів ЗНО з української мови узагальненими оцінками Надарая-Ватосна\n(компоненти суміші на основі статистичних даних рідних мов в регіонах України)"
+output: 
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, message=FALSE}
+library(plotly)
+library(Hmisc)
+library(WVPlots)
+library(plyr)
+library(reshape)
+source("tools/DataSplitTools.R")
+source("tools/GeneralizedNadarayaWatson.R")
+source("tools/CommonTools.R")
+source("tools/CrossValTools.R")
+```
+
+# Аналіз даних ЗНО 2018 року та статистики рідних мов
+
+Зчитаємо дані:
+
+```{r primitive_analysis1}
+df <- read.csv2(file = "data/ZNOandVoating/input_2018.csv", header = TRUE, fileEncoding = "CP1251", sep = ",", dec=".", row.names = 1)
+names(df) <- c("region", "ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+df <- df[, -(4:8)]
+
+describe(df)
+```
+
+Змерджимо із інформацією про рідну мову по всім областям.
+Отримаємо:
+
+```{r merge_data}
+mt <- read.csv2("data/mother_tongue/grouped_mt.csv", header = TRUE, sep = ",", dec=".", row.names = 1)
+mt$region <- rownames(mt)
+mt$region[mt$region == "м. Київ"] <- "м.Київ"
+
+colnames(mt)[1] <- "ukr_lang"
+df[df$math < 0, c("math")] <- 0
+
+df <- merge(df, mt, by = "region", all.x = TRUE)
+
+rownames(df) <- 1:nrow(df)
+```
+
+## ЗНО з математики та української мови
+
+Виведемо загальні характеристики даних ЗНО з математики та української мови:
+
+```{r primitive_analysis2}
+describe(df[, c("math", "ukr")])
+```
+
+Із таблиці вище видно, що в записах нема пропущених значень.
+Судячи із значень квантилів, незначна частка результатів ЗНО з математики є нулями (менше 10%).
+Варто відмітити, що трішки більша частка значень 0 у ЗНО з української мови (бфльше 10%, але менше 25%).
+
+Подивимося на розподіли:
+
+```{r histogram1}
+p1 <- plot_ly(x = df[, "math"], type = "histogram", name = "math")
+p2 <- plot_ly(x = df[, "ukr"], type = "histogram", name = "ukr") 
+
+plotly::subplot(p1, p2) %>% layout(title = "EIT: Ukranian language and mathematics")
+remove(p1); remove(p2)
+```
+
+Розподіли балів результатів ЗНО з української та математики помітно різняться. 
+
+Подивимося на співвідношення людей, котрі отримали 0 з математики та українській одночасно.
+
+```{r zero_both_subj}
+print("Не подолали поріг або не здавали ЗНО відносно всіх абітурієнтів: " %&% as.character(round(nrow(df[(df$math == 0 & df$ukr == 0), ]) * 100 / nrow(df), 2)) %&% "%")
+print("Не подолали поріг або не здавали ЗНО відносно тих, хто не склав математику: " %&% as.character(round(nrow(df[(df$math == 0 & df$ukr == 0), ]) * 100 / nrow(df[(df$math == 0), ]), 2)) %&% "%")
+print("Не подолали поріг або не здавали ЗНО відносно тих, хто не склав українську: " %&% as.character(round(nrow(df[(df$math == 0 & df$ukr == 0), ]) * 100 / nrow(df[(df$ukr == 0), ]), 2)) %&% "%")
+```
+
+Із виведеної аналітики напрошуються наступні висновки, 
+1) Невелика частка абітурієнтів, що мають 0 одночасно з двох предметів.
+2) Абітурієнти, котрі не склали іспит із математики, скоріш за все не склали й українську. 
+
+Видалимо стрічки, що відповідають спостереженням із 0 хочаб в одному ЗНО та подивимося на розподіл.
+
+```{r delete_math0}
+df <- df[(df$math != 0) & (df$ukr != 0) ,]
+p1 <- plot_ly(x = df[, "math"], type = "histogram", name = "math")
+p2 <- plot_ly(x = df[, "ukr"], type = "histogram", name = "ukr")
+
+plotly::subplot(p1, p2) %>% layout(title = "Distribution of the passed EIT",
+  annotations = list(list(x = 0.2, y = 1.05, text = "math", showarrow = F, xref = 'paper', yref = 'paper'),
+                     list(x = 0.8, y = 1.05, text = "ukr", showarrow = F, xref = 'paper', yref = 'paper')))
+remove(p1); remove(p2);
+```
+
+Відмітимо, що наразі частка людей, котрі погано здали українську мову зменшилася близько вдвічі (було в околі 900, стало в околі 400).
+
+Гістограма розсіювання, в свою чергу, виглядає наступним чином:
+
+```{r plot_no_math0}
+plot_ly(data = df, x = ~math, y = ~ukr, mode = "markers", type = "scatter",  marker=list(opacity = 0.7)) %>% layout(title = "Passed EIT results")
+```
+
+Варто відмітити, що для абітурієнтів, що склали математику краще ніж 190 балів, помітна тенденція, як правило, кращого складання ЗНО з української.
+
+
+## Рідна мова
+
+Виведемо загальні характеристики кожної політичної сили:
+
+```{r primitive_analysis3}
+describe(df[, -c(1, 2, 3)])
+```
+
+```{r plot1}
+colors_ <- c("aliceblue", "antiquewhite", "aqua", "aquamarine", "azure",
+             "beige", "bisque", "black", "blanchedalmond", "blue",
+             "blueviolet", "brown", "burlywood", "cadetblue",
+             "chartreuse", "chocolate", "coral", "cornflowerblue",
+             "cornsilk", "crimson", "cyan", "darkblue", "darkcyan",
+             "darkgoldenrod", "darkgray", "darkgrey", "darkgreen")
+
+
+pivot_mt <- mt[, -ncol(mt)]
+
+n_col <- ncol(pivot_mt)
+n_row <- nrow(pivot_mt)
+
+all_plots <- list()
+for (i in 1:n_row) {
+  all_plots[[i]] <- plot_ly(pivot_mt, 
+                            x = colnames(pivot_mt)[-1], y = as.numeric(pivot_mt[i, 2:n_col]), 
+                            type = "bar", name = pivot_mt[i, 1], marker = list(color = colors_[1:(n_col-1)]))
+}
+
+plotly::subplot(all_plots, nrows = 4, shareX = TRUE) %>% 
+  layout(title="Distributions according to regions")
+```
+
+
+```{r plot2}
+
+all_plots <- list()
+all_plots[[1]] <- plot_ly(x = rownames(pivot_mt), y = pivot_mt[, 1], 
+                            type="bar", name = colnames(pivot_mt)[1])
+for (i in 2:n_col) {
+  all_plots[[i]] <- plot_ly(x = rownames(pivot_mt), y = pivot_mt[, i], 
+                            type="bar", name = colnames(pivot_mt)[i])
+}
+
+plotly::subplot(all_plots, nrows = 4, shareX = TRUE) %>% 
+  layout(title="Distributions of every language")
+
+```
+
+# Розбиття
+
+Розіб'ємо вибірку на тренувальну та тестову частини у відсотковому співвідношенні 80/20%.
+Далі, тренувальну частину розіб'ємо на 5 рівних частин для проведення 5-ти фолдової кроссвалідації, аналогічно до того, як було зроблено для результатів ЗНО 2016 року.
+
+```{r cross_val_split}
+set.seed(42)
+
+df[, -c(1, 2, 3)] <- df[, -c(1, 2, 3)]/100
+df <- df[, -1]
+df <- df[(df$math != 0) & (df$ukr != 0) ,]
+
+train_test_list <- train_test_split(df, ratio = 0.80)
+
+train <- train_test_list[["train"]]; test <- train_test_list[["test"]]
+write.csv(train, "data/computation_results/train2018.csv"); write.csv(test, "data/computation_results/test2018.csv")
+
+remove(df); remove(train_test_list); remove(test)
+```
+
+
+# Узагальнені оцінки Надарая-Ватсона
+
+## Визначення параметрів згладжування
+
+Скористаємося 5-ти фолдовою кросс-валідацією для знаходження оптимальних параметрів згладжування для кожної моделі аналогычно до того, як це було зроблено для результатыв ЗНО 2016 року.
+
+
+```{r 5times_5folds_cv, message=FALSE}
+              
+# h_range <- c(seq(0.1, 1, 0.5), seq(1, 4, 0.5),5,  8, 10)
+# 
+# for (i in 1:5) {
+#   print("***** " %&% as.character(i) %&% " ******")
+#   set.seed(i)
+#   cv_split <- cross_validation_split(train, k = 5)
+#   GNW_cv_results <- GNWcv_across_h(h_range = h_range,
+#                                  cv_df_split = cv_split,
+#                                  X_colname = "math", Y_colname = "ukr",
+#                                  W_colname = colnames(cv_split[[1]])[-(1:2)],
+#                                  use_parallel = TRUE)
+#   write.csv(GNW_cv_results, "data/computation_results/2018mt_data/5cv_mean_std_" %&% as.character(i) %&% ".csv")
+# }
+# 
+# # h_opt <- optimal_h(GNW_cv_results)
+# remove(h_range); remove(i); remove(cv_split); remove(GNW_cv_results)
+```
+
+
+
+
+Результат середніх та диспресії збережемно в змінній $GNW\_cv\_results$, а оптимальні $h$, серед запропонованих для перебору, у змінну $h\_opt$.
+
+```{r optimal_parameters}
+data_path <- "data/computation_results/2018mt_data/"
+file_names <- dir(data_path) #where you have your files
+file_names <- data_path %&% file_names
+
+cv_results <- lapply(file_names, 
+                     function(x){
+                       df <- as.matrix(read.csv(x, row.names = 1))
+                       l <- list(df=df , h=optimal_h(df))
+                       return(l)
+                       })
+
+cv_results_h <- lapply(cv_results, function(x){x$h})
+cv_results_mean_std <- lapply(cv_results, function(x){x$df})
+
+print(cv_results_h)
+
+```
+
+## Порівняння результатів кросс-валідації та прогнозування на відкладеній вибірці
+
+Порівняємо тепер результати кросс-валідації з результатми прогнозування на тестовій частині даних.
+
+```{r comparing_cross_val_test}
+# train <- read.csv("data/computation_results/train2018.csv", row.names = 1, stringsAsFactors = FALSE)
+# test <- read.csv("data/computation_results/test2018.csv", row.names = 1, stringsAsFactors = FALSE)
+# h_opt <- cv_results_h[[1]][2, ]
+# 
+# GNW <- GeneralisedNadarayaWatson$new()
+# GNW$train(X_train = as.numeric(train[, "math"]),
+#           Y_train = as.numeric(train[, "ukr"]),
+#           W_train = as.matrix(train[, -c(1, 2)]))
+# GNW$run_cluster()
+# prediction_with_acoeff <- GNW$predict_in_parallel(X_test = as.numeric(test[, "math"]),
+#                                                   W_test = as.matrix(test[, -c(1, 2)]), h = h_opt)
+# GNW$stop_cluster()
+# 
+# prediction <- prediction_with_acoeff[["prediction"]]
+# A_coeff <- prediction_with_acoeff[["A_test"]]
+# 
+# write.csv(prediction, "data/computation_results/prediction2018m.csv")
+# write.csv(A_coeff, "data/computation_results/A_coeff2018m.csv")
+# 
+# remove(GNW); remove(train)
+```
+
+Порахуємо зважену суму МНК для прогнозу зробленого на тестових даних.
+
+```{r weighted_RMSE_tst_prediction}
+train <- read.csv("data/computation_results/train2018.csv", row.names = 1, stringsAsFactors = FALSE)
+test <- read.csv("data/computation_results/test2018.csv", row.names = 1, stringsAsFactors = FALSE)
+
+prediction <- as.matrix(read.csv("data/computation_results/prediction2018m.csv", row.names = 1, stringsAsFactors = FALSE))
+A_coeff <- as.matrix(read.csv("data/computation_results/A_coeff2018m.csv", row.names = 1, stringsAsFactors = FALSE))
+
+WMSE <- weighted_MSE(Y_true = as.numeric(test[, "ukr"]), Y_predicted = prediction, A_coeff = A_coeff)
+names(WMSE) <- rep("comp.") %&% as.character(1:5)
+WMSE
+```
+
+Відмітимо, що найменше значення зваженого МНК для моделей, що відповідають опозиційним силам.
+
+Порівняємо зважені МНК результатів прогнозування з результатами крос-валідації, використовуючи відповідними параметрами згладжування.
+
+```{r comparing_cv_test_WMSE}
+h_opt <- cv_results_h[[1]][2, ]
+GNW_cv_results <-cv_results_mean_std[[1]]
+
+cv_mean_results <- sapply(1:length(h_opt),
+                          function(i){
+                            GNW_cv_results[which("mean_" %&% as.character(h_opt[i]) == rownames(GNW_cv_results)), i]
+                            })
+cv_test_comparing <- rbind(cv_mean_results, WMSE)
+rownames(cv_test_comparing) <- c("cross-validation", "test")
+colnames(cv_test_comparing) <- 1:5
+print(cv_test_comparing)
+```

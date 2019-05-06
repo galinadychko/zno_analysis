@@ -1,0 +1,124 @@
+---
+title: "Report_2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+current_path <- getwd()
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = paste(current_path, "/../..", sep=""))
+```
+
+```{r libraries, message=FALSE}
+library(plotly)
+library(Hmisc)
+library(WVPlots)
+library(plyr)
+source("tools/CommonTools.R")
+source("tools/DataSplitTools.R")
+source("tools/GeneralizedNadarayaWatson.R")
+source("tools/CommonTools.R")
+source("tools/CrossValTools.R")
+
+```
+
+Виділимо 3 компоненти:
+* відповідно до проукраїнських регіонів
+* відповідно до "байдужих" регіонів
+* всі інші
+
+
+```{r 3comp_read_data}
+df <- read.csv2(file = "data/ZNOandVoating/input_2016.csv", header = 1, sep = ",", dec = ".", fileEncoding = "CP1251", stringsAsFactors = FALSE)
+names(df) <- c("regname", "ukr","math", "pro_ukr", "radical", "opposition", "small", "not_voted")
+df <- as.data.frame(df)
+
+# group radical, opposition, small into one component with name "other"
+df[, "other"] <- rowSums(df[, c("radical", "opposition", "small")])
+df <- df[, -c(5, 6, 7)]
+
+print("Number of observations vefore cleaning: " %&% as.character(nrow(df)))
+
+# delete Donetsk and Luhansk regions
+df <- df[(df$regname != "Донецька область") & (df$regname != "Луганська область"), ]
+print("Number of obdervations after filtering: " %&% as.character(nrow(df)))
+
+# delete object with math and/or ukr == 0
+df <- df[(df$math != 0) & (df$ukr != 0) ,]
+print("Number of observations after filtering zeros: " %&% as.character(nrow(df)))
+
+df$regname <- NULL
+head(df, 3)
+```
+
+Поглянемо на кореляції між результатами ЗНО, політичними силами:
+
+```{r 3compcorrolation_heatmap}
+c <- cor(df, method = "pearson")
+plot_ly(x = rownames(c), y = colnames(c), z = c, colors = "Greys", type = "heatmap") %>% layout(title = "Pearson Correlation")
+remove(c)
+```
+Відмітимо майже 0 кореляцію між результатами ЗНО з української мови та всіма політичними напрямками.
+Також помітимо, від'ємні значні кореляції проукраїнської сили та всіма іншими групами, що є логічним.
+
+Із коду нижче видно, що знову нема областей для яких ймовірніше за все, більшість проголосувала за "інше"
+
+```{r 3compseparate_distribution_math}
+W <- as.data.frame(df[, -c(1, 2)])
+W[, "max_value"] <- apply(W, 1, max)
+
+print(df[W[, "other"] == W["max_value"], ])
+
+```
+Розіб'ємо вибірку на тренувальну та тестову частини у відсотковому співвідношенні 80/20%.
+Далі, тренувальну частину розіб'ємо на 5-частин для проведення 5-ти фолдової кроссвалідації з метою визначення оптимального для кожної компоненти параметра згладжування h.
+
+```{r 3compcross_val_split}
+set.seed(42)
+
+df[, -(1:2)] <- df[, -(1:2)]/100
+
+train_test_list <- train_test_split(df, ratio = 0.80, random_seed = 42)
+
+train <- train_test_list[["train"]]; test <- train_test_list[["test"]]
+write.csv(train, "data/computation_results/2016/train2016_3comp.csv"); write.csv(test, "data/computation_results/2016/test2016_3comp.csv")
+
+remove(df); remove(train_test_list)
+```
+
+# Узагальнені оцінки Надарая-Ватсона
+
+## Визначення параметрів згладжування
+
+### Методом перебору
+
+Переберемо кілька комбінацій параметрів згладжування для регресії кожної компоненти:
+
+```{r brute_force_method_computation}
+X_train <- train[, "math"]; Y_train <- train[, "ukr"]
+X_test  <- test[, "math"];  Y_test  <- test[, "ukr"]; 
+
+W_train <- as.matrix(train[, -c(1, 2)])
+W_test <- as.matrix(test[, -c(1, 2)])
+
+h <- 0.000001
+gnw <- GeneralisedNadarayaWatson$new()
+gnw$run_cluster()
+gnw$train(X_train, Y_train, W_train)
+train_prediction <- gnw$predict_in_parallel(X_train, W_train, h)
+test_prediction <- gnw$predict_in_parallel(X_test, W_test, h)
+gnw$stop_cluster()
+```
+
+Візуалізуємо:
+
+```{r brute_force_method_viz}
+all_plots <- list()
+annotations_list <- list()
+
+for (i in 1:3) {
+    all_plots[[i]] <- plot_ly(x = X_train, y=train_prediction$prediction[, i], 
+                                 mode = "markers", type = "scatter", marker=list(opacity = 0.7), name = as.character(i))
+}
+all_plots
+```
