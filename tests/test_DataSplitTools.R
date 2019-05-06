@@ -16,10 +16,10 @@ test_that("Test output type of train_test_split(correct_input)", {
 
 
 test_that("Test cross_validation_split(not_correct_input)", {
-  expect_error(cross_validation_split(rep(NaN, 5), 1), "Not correct input type")
-  expect_error(cross_validation_split(list(NaN), 1), "Not correct input type")
-  expect_error(cross_validation_split(as.factor(NaN), 1), "Not correct input type")
-  expect_error(cross_validation_split(matrix(NaN, 1, 2), 1), "Not correct input dimension")
+  expect_error(cross_validation_split(rep(NaN, 5), 5, 1), "Not correct input type")
+  expect_error(cross_validation_split(list(NaN), 5, 1), "Not correct input type")
+  expect_error(cross_validation_split(as.factor(NaN), 5, 1), "Not correct input type")
+  expect_error(cross_validation_split(matrix(NaN, 1, 2), 5, 1), "Not correct input dimension")
 })
 
 
