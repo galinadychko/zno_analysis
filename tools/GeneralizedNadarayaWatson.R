@@ -40,8 +40,8 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                          self$A <- acoeff(W_train)
                                          self$h <- h
                                        }, 
-                                       predict = function(X_test, W_test){
-                                         if (is.numeric(X_test) != TRUE | 
+                                       predict = function(X_test, W_test, comp_number=NULL){  
+                                         if (is.numeric(X_test) != TRUE |
                                              is.matrix(W_test) != TRUE)
                                            {stop("Not correct class attributes")}
                                          if (is.null(self$X_train) | 
@@ -51,11 +51,15 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                            {stop("The model was not trained correctly")}
                                          if (!is.null(self$A))
                                            {if (any(is.na(self$A))) {stop("The model coefficients are not numbers")}}
-                                         if (length(X_test) != nrow(W_test))
+                                         if ((length(X_test) != nrow(W_test)))
                                            {stop("Not correct input dimensions")}
+                                         if (is.null(comp_number) == TRUE)
+                                           {ncomp <- 1:ncol(W_test)}
+                                         else if (comp_number > ncol(W_test)) {stop("Not correct component number")}
+                                         else {ncomp <- comp_number}
                                          results <- sapply(X_test, 
                                                            function(x, h){
-                                                             res <- nw_any_components(x, self$X_train, self$Y_train, h, self$A)
+                                                             res <- nw_any_components(x, self$X_train, self$Y_train, h, self$A[, ncomp])
                                                              return(res)
                                                            }, h = self$h)
                                          return(list("prediction" = t(results), 
@@ -64,7 +68,7 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                                                            return(paste0("Acoeff caused the error while predict: '", e, "'"))
                                                                            })))
                                        },
-                                       predict_in_parallel = function(X_test, W_test){
+                                       predict_in_parallel = function(X_test, W_test, comp_number=NULL){
                                          if (is.numeric(X_test) != TRUE | 
                                              is.matrix(W_test) != TRUE)
                                            {stop("Not correct class attributes")}
@@ -77,18 +81,29 @@ GeneralisedNadarayaWatson <- R6Class("GeneralisedNadarayaWatson",
                                            {if (any(is.na(self$A))) {stop("The model coefficients are not numbers")}}
                                          if (length(X_test) != nrow(W_test))
                                            {stop("Not correct input dimensions")}
+                                         if (is.null(comp_number) == TRUE)
+                                           {ncomp <- 1:ncol(W_test)}
+                                         else if (comp_number > ncol(W_test)) {stop("Not correct component number")}
+                                         else {ncomp <- comp_number}
                                          n_rows <- length(X_test)
-                                         list_of_parts <- split_k_parts(k = self$max_threads, nrows = n_rows, 
-                                                                        random_seed = self$random_seed)
+                                         set.seed(self$random_seed)
+                                         list_of_parts <- split_k_parts(k = self$max_threads, nrows = n_rows)
                                          res <- foreach(each_part = list_of_parts,
                                                         .combine = list,
                                                         .multicombine = TRUE,
-                                                        .export = c("self", "W_test")) %dopar% {
-                                                          pr <- self$predict(X_test[each_part],
-                                                                             matrix(W_test[each_part, ], nrow = length(each_part)))
+                                                        .export = c("X_test", "W_test", "ncomp", "self")
+                                                        ) %dopar% {
+                                                          M <- ncol(W_test)
+                                                          X <- X_test[each_part]
+                                                          W <- matrix(W_test[each_part, ], 
+                                                                      nrow = length(each_part), ncol = M,
+                                                                       dimnames = list(names(X), 1:M))
+                                                          pr <- self$predict(X_test=X, W_test=W, comp_number=ncomp)
                                                           pr$prediction
-                                                          }
-                                          return(list("prediction" = do.call(rbind, res), 
+                                                        }
+                                         prediction <- tryCatch({pred <- do.call(cbind, res)},
+                                                                error = function(cond){pred <- do.call(rbind, res)})
+                                          return(list("prediction" = prediction,
                                                       "A_test" = acoeff(W_test)))
                                         },
                                        stop_cluster = function(){
