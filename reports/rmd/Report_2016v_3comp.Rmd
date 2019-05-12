@@ -1,5 +1,5 @@
 ---
-title: "Report_2"
+title: "Прогнозування результатів ЗНО з української мови узагальненими оцінками Надарая-Ватосна (3 компоненти)<br/>(порівняння результатів із узагальненою лінійною регресією)"
 output: html_document
 ---
 
@@ -14,18 +14,23 @@ library(plotly)
 library(Hmisc)
 library(WVPlots)
 library(plyr)
-source("tools/CommonTools.R")
-source("tools/DataSplitTools.R")
-source("tools/GeneralizedNadarayaWatson.R")
-source("tools/CommonTools.R")
-source("tools/CrossValTools.R")
-
+library(tidyverse)
+library(htmltools)
+source("src/tools/CommonTools.R")
+source("src/metrics.R")
+source("src/visualization.R")
+source("src/GeneralizedModels/GeneralizedNadarayaWatson.R")
+source("src/GeneralizedModels/GeneralizedLinearRegression.R")
+source("src/tools/DataSplitTools.R")
 ```
 
-Виділимо 3 компоненти:
-* відповідно до проукраїнських регіонів
-* відповідно до "байдужих" регіонів
-* всі інші
+Виділимо 3 компоненти відповідно до:
+
+*  проукраїнських регіонів
+
+* "байдужих" регіонів
+
+*  всі інші
 
 
 ```{r 3comp_read_data}
@@ -37,7 +42,7 @@ df <- as.data.frame(df)
 df[, "other"] <- rowSums(df[, c("radical", "opposition", "small")])
 df <- df[, -c(5, 6, 7)]
 
-print("Number of observations vefore cleaning: " %&% as.character(nrow(df)))
+print("Number of observations before cleaning: " %&% as.character(nrow(df)))
 
 # delete Donetsk and Luhansk regions
 df <- df[(df$regname != "Донецька область") & (df$regname != "Луганська область"), ]
@@ -60,8 +65,10 @@ remove(c)
 ```
 Відмітимо майже 0 кореляцію між результатами ЗНО з української мови та всіма політичними напрямками.
 Також помітимо, від'ємні значні кореляції проукраїнської сили та всіма іншими групами, що є логічним.
+Досить висока додатня кореляція між байдужими та "іншими". Можливо таким чином, люди виражали позицію проти "проукраїнського" напрямку.
 
-Із коду нижче видно, що знову нема областей для яких ймовірніше за все, більшість проголосувала за "інше"
+Із коду нижче видно, що нема областей для яких ймовірніше за все, більшість проголосувала за "інше". 
+Отже, 3-я компонента - не надто яскраво представлена в даних, що аналізуються.
 
 ```{r 3compseparate_distribution_math}
 W <- as.data.frame(df[, -c(1, 2)])
@@ -71,7 +78,7 @@ print(df[W[, "other"] == W["max_value"], ])
 
 ```
 Розіб'ємо вибірку на тренувальну та тестову частини у відсотковому співвідношенні 80/20%.
-Далі, тренувальну частину розіб'ємо на 5-частин для проведення 5-ти фолдової кроссвалідації з метою визначення оптимального для кожної компоненти параметра згладжування h.
+Спробуємо "в ручну" підібрати на тренувальній вибірці значення параметрів згладжування для кожної компоненти.
 
 ```{r 3compcross_val_split}
 set.seed(42)
@@ -88,37 +95,161 @@ remove(df); remove(train_test_list)
 
 # Узагальнені оцінки Надарая-Ватсона
 
-## Визначення параметрів згладжування
+## Визначення параметрів згладжування методом перебору
 
-### Методом перебору
+### Графічний аналіз
 
-Переберемо кілька комбінацій параметрів згладжування для регресії кожної компоненти:
+Зобразимо кілька найбільш яскравих моделей узагальненої оцінки Надарая-Ватсона (УОНВ) кожної компоненти та порівняємо із узагальненою лінійною моделлю (УЛМ).
+Під "найбільш якравими моделями" маються на увазі моделі, що відповідають таким компонентам згладжування:
 
-```{r brute_force_method_computation}
+- найменші параметри згладжування, які дають прогноз в межах необхідної шкали (100-200 балів)
+
+- параметри, що відповідають відчутній зміні гладкості моделі
+
+- параметри "крайового ефекту"
+
+Надто згладжені моделі будуються для того, щоб порівняти на скільки відчутно відрізняються УОНВ від УЛМ.
+
+Для цього спочатку перетворимо дані відповідно до необхідного формату
+
+```{r train_test_preprocessing}
+h <- list(h1 = c(1.25, 5, 10, 20, 30), 
+          h2 = c(3.9, 5, 10, 20, 30),
+          h3 = c(7.5, 10, 15, 20, 30))
+
+h_llinear <- list(h1=c(5, 9, 15, 25, 150),
+                  h2=c(5, 10, 20, 50, 100),
+                  h3= c(20, 30, 40, 60, 140))
+
 X_train <- train[, "math"]; Y_train <- train[, "ukr"]
-X_test  <- test[, "math"];  Y_test  <- test[, "ukr"]; 
+X_test  <- test[, "math"];  Y_test  <- test[, "ukr"]
+
+var_names_duplicates <- c( "math", "pro_ukr", "not_voted", "other")
+Xtest_no_duplicates <- test[!duplicated(test[, var_names_duplicates]), "math"]
+Ytest_no_duplicates <- test[!duplicated(test[, var_names_duplicates]), "ukr"]
+Wtest_no_duplicates <- as.matrix(test[!duplicated(test[, var_names_duplicates]), -c(1, 2)])
 
 W_train <- as.matrix(train[, -c(1, 2)])
 W_test <- as.matrix(test[, -c(1, 2)])
-
-h <- 0.000001
-gnw <- GeneralisedNadarayaWatson$new()
-gnw$run_cluster()
-gnw$train(X_train, Y_train, W_train)
-train_prediction <- gnw$predict_in_parallel(X_train, W_train, h)
-test_prediction <- gnw$predict_in_parallel(X_test, W_test, h)
-gnw$stop_cluster()
 ```
 
-Візуалізуємо:
+Пообудуємо узагальнені оцінки Надарая-Ватсона та лінійної моделі.
 
-```{r brute_force_method_viz}
-all_plots <- list()
-annotations_list <- list()
+Візуалізуємо на тестових даних:
 
-for (i in 1:3) {
-    all_plots[[i]] <- plot_ly(x = X_train, y=train_prediction$prediction[, i], 
-                                 mode = "markers", type = "scatter", marker=list(opacity = 0.7), name = as.character(i))
+```{r brute_force_method_test}
+l_test <-  htmltools::tagList(lapply(1:5,
+                                        function(x){
+                                          plotls <- lapply(1:3,
+                                                           Generalized_models_comparing, 
+                                                           x_train=X_train,  y_train=Y_train, w_train=W_train,
+                                                           x_test=Xtest_no_duplicates, y_test=Ytest_no_duplicates,
+                                                           w_test=Wtest_no_duplicates, h=h, h_llinear=h_llinear, i=x)
+                                          return(plotls)
+                                          }))
+l_test
+```
+
+Відмітимо більше-менш однаковий тренд побудованих оцінок. 
+
+Узагальнені оцінки Надарая-Ватсона коливаються вздовж узагальнених лінійних оцінок та мають однаковий характер поведінки.
+Лінійні та локально лінійні оцінки майже співпадають.
+
+Відповідно до значень зважених квадратичних похибок, всі оцінки, в основному, дають якість однакового порядку.
+
+Варто відмітити наступний недолік узагальненої лінійної моделі: прогнозом може бути надто великим значенням (таке, що виходить за межі 200 балів).
+
+(Чого не трапляється у випадку узагальнених оцінок Надарая-Ватсона та локально лінійних, за рахунок вдало підібраних параметрів згладжування).
+
+Зобразимо тепер моделі 3-х компонент на одному графіку. 
+
+Побудуємо графіки для узагальнених лінійних оцінок.
+
+```{r brute_force_all_components_gnw}
+l_gnw_plots <- lapply(1:5,
+                 function(x){
+                   results <- NULL
+                   for(l in 1:3){
+                     results <- GNW_comparing(l, x_train=X_train,  y_train=Y_train, w_train=W_train,
+                                 x_test=Xtest_no_duplicates, y_test=Ytest_no_duplicates,
+                                 w_test=Wtest_no_duplicates, h=h, i=x, p = results)
+                   }
+                   return(results %>% layout(annotations = list(x =0.08, y = 1.01,
+                                                                text = "<b>Generalized Nadaraya-Watson</b>\n(h#1=" %&%
+                                                                  as.character(h[[1]][x]) %&% ", h#2=" %&%
+                                                                  as.character(h[[2]][x]) %&% ", h#3=" %&%
+                                                                  as.character(h[[3]][x]) %&% ")",
+                                                                showarrow = F,
+                                                                xref='paper', yref='paper')))
+                })
+```
+
+Для порівняння, аналогічно відобразимо узагальнені лінійні моделі.
+
+```{r brute_force_all_components_glm}
+l_glm_plots <- NULL
+for(l in 1:3){
+  l_glm_plots <- GLM_comparing(l, x_train=X_train,  y_train=Y_train, w_train=W_train,
+                           x_test=Xtest_no_duplicates, y_test=Ytest_no_duplicates,
+                           w_test=Wtest_no_duplicates, p = l_glm_plots)
 }
-all_plots
+l_glm_plots <- l_glm_plots %>% layout(annotations = list(x = .6 , y =1.01,
+                                                         text = "<b>Generalized linear</b>",
+                                                         showarrow = F,
+                                                         xref='paper', yref='paper'))
 ```
+
+Також відобразимо узагальнені локально лінійні моделі.
+
+```{r brute_force_all_components_gllm}
+l_gll_plots <- lapply(1:5,
+                 function(x){
+                   results <- NULL
+                   for(l in 1:3){
+                     results <- GLLM_comparing(l, x_train=X_train,  y_train=Y_train, w_train=W_train,
+                                               x_test=Xtest_no_duplicates, y_test=Ytest_no_duplicates,
+                                               w_test=Wtest_no_duplicates, h_llinear=h_llinear, i=x, p = results)
+                   }
+                   return(results %>% layout(annotations = list(x = 1.1 , y = 1.01,
+                                                                text = "<b>Generalized Local Linear</b>\n(h#1=" %&%
+                                                                  as.character(h_llinear[[1]][x]) %&% ", h#2=" %&%
+                                                                  as.character(h_llinear[[2]][x]) %&% ", h#3=" %&%
+                                                                  as.character(h_llinear[[3]][x]) %&% ")",
+                                                                showarrow = F,
+                                                                xref='paper', yref='paper')))
+                })
+```
+
+
+Скомпонуємо отримані графіки:
+
+```{r brute_force_all_components_glm_gnw, width = 5000, height = 3000}
+l <- htmltools::tagList()
+for(i in 1:5){
+  l[[i]] <- plotly::subplot(list(l_gnw_plots[[i]], l_glm_plots, l_gll_plots[[i]])) %>% 
+    layout(title="<b>EIT models` performances on test data</b>")
+}
+l
+```
+
+Із рисунків видно, що загальний тренд узагальнених оцінок Надарая-Ватсона та лінійної регресії співпадає (при чому для всіх параметрів згладжування УОНВ).
+
+Відмітимо тенденцію всих моделей: вищий бал із математики - вищий бал із української мови.
+
+Для компонети, що відповідає проукраїнському напрямку властива наступна поведінка: 
+
+1) При здачі ЗНО з математики на 100 балів, прогноз результатів української - більше 130 балів
+
+2) Відносно різке зростання функції (вищий бал із математики - вищий бал із української)
+
+Для компоненти, що відповідає підтримки радикалів, опозиціонерів та інших політичних сил, властива наступна поведінка:
+
+1) Вищі результати прогнозу при малих балах із математики (до 130 - 150) (відносно всіх моделей)
+
+2) Нижчі бали прогнозу при високих результатах із математики (відносно першої компоненти)
+
+Особливості компоненти, що відповідає "байдужості" (не голосуванню):
+
+1) У цілому, прогноз гірших результатів із української
+
+2) Плавний ріст прогнозу, при результатах із математики більше ніж 160-170 балів (для УОНВ)
